@@ -18,8 +18,8 @@ classdef satellite_simulation < handle
         t % Time vector from simulation output
         Rsat % Satellite position in ECI
         Vsat % Satellite velocity in ECI
-        Qin2body % Attitude quaternion (inertial to body)
-        Qbody2in % Attitude quaternion (body to inertial)
+        Qeci2body % Attitude quaternion (inertial to body)
+        Qbody2eci % Attitude quaternion (body to inertial)
         Rlos % Line of sight position (from satellite to earth)
         Rtar % Target position
         Vtar % Target velocity
@@ -130,9 +130,9 @@ classdef satellite_simulation < handle
             % Save the satellite position and attitude in ECI.
             obj.Rsat = obj.simOut.yout{1}.Values.Data;
             obj.Vsat = obj.simOut.yout{2}.Values.Data;
-            obj.Qin2body = obj.simOut.yout{4}.Values.Data;
+            obj.Qeci2body = obj.simOut.yout{4}.Values.Data;
             obj.Wsat_b = deg2rad(obj.simOut.yout{5}.Values.Data);
-            obj.Qbody2in = quatinv(obj.Qin2body);
+            obj.Qbody2eci = quatinv(obj.Qeci2body);
 
         end
 
@@ -204,7 +204,7 @@ classdef satellite_simulation < handle
 
             % Find direction of line of sight, considered as exiting from 
             % the x axis of the satellite.
-            LOS_hat = quatrotate(obj.Qbody2in,[-1,0,0]);
+            LOS_hat = quatrotate(obj.Qbody2eci,[-1,0,0]);
 
             if options.model == "sphere"
                 % Intersection between line of sight and earth surface
@@ -225,10 +225,10 @@ classdef satellite_simulation < handle
             obj.Rtar = obj.Rsat + obj.Rlos;
 
             % Angular velocity in inertial frame
-            Wsat_in = quatrotate(obj.Qbody2in,obj.Wsat_b);
+            Wsat_eci = quatrotate(obj.Qbody2eci,obj.Wsat_b);
 
             % Target velocity
-            obj.Vtar = obj.Vsat - (dot(obj.Rlos,obj.Vsat,2) + dot(obj.Rsat,cross(Wsat_in,obj.Rlos),2))./(dot(obj.Rsat,LOS_hat,2) + rho).*LOS_hat + cross(Wsat_in,obj.Rlos);
+            obj.Vtar = obj.Vsat - (dot(obj.Rlos,obj.Vsat,2) + dot(obj.Rsat,cross(Wsat_eci,obj.Rlos),2))./(dot(obj.Rsat,LOS_hat,2) + rho).*LOS_hat + cross(Wsat_eci,obj.Rlos);
         end
 
         function [Rgt,LLA_gt] = ground_track(obj, options)
