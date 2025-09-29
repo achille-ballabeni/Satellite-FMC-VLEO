@@ -68,7 +68,10 @@ plot3(R_gt_sat_eci(:,1), R_gt_sat_eci(:,2), R_gt_sat_eci(:,3))
 plot3(R_gt_tar_eci(:,1),R_gt_tar_eci(:,2),R_gt_tar_eci(:,3))
 axis equal
 grid on
-legend("Satellite","Sat ground track","LoS")
+legend("Satellite","Satellite ground track","LoS")
+xlabel("x [m]")
+ylabel("y [m]")
+zlabel("z [m]")
 title("ECI Ground Tracks")
 
 % Compare velocities
@@ -77,7 +80,9 @@ plot(ones(size(Vtar)).*cubesat.t,Vtar)
 hold on
 plot(ones(size(Vtar_numerical)).*t_der,Vtar_numerical,"x","LineWidth",1)
 legend("u - analytic","v - analytic","w - analytic","u - numerical","v - numerical","w - numerical")
-title("Velocity components [m/s]")
+xlabel("Time [s]")
+ylabel("Velocity [m/s]")
+title("Velocity components vs Time")
 grid on
 
 % Velocity relative errors
@@ -88,7 +93,7 @@ plot(t_der,Vtar_diff(:,1),"x","LineWidth",1.5)
 hold on
 plot(t_der,zeros(size(Vtar_diff(:,1))), 'r--') % Reference line at zero
 title('Relative error - u component')
-xlabel('Time step')
+xlabel('Time [s]')
 ylabel('Relative error')
 grid on
 
@@ -98,7 +103,7 @@ plot(t_der,Vtar_diff(:,2),"x","LineWidth",1.5)
 hold on
 plot(t_der,zeros(size(Vtar_diff(:,2))), 'r--') % Reference line at zero
 title('Relative error - v component')
-xlabel('Time step')
+xlabel('Time [s]')
 ylabel('Relative error')
 grid on
 
@@ -108,12 +113,12 @@ plot(t_der,Vtar_diff(:,3),"x","LineWidth",1.5)
 hold on
 plot(t_der,zeros(size(Vtar_diff(:,3))), 'r--') % Reference line at zero
 title('Relative error - w component')
-xlabel('Time step')
+xlabel('Time [s]')
 ylabel('Relative error')
 grid on
 
 % Adjust layout
-sgtitle('Velocity Differences: Vtar vs Vtar Numerical')
+sgtitle('Analytic vs Numerical Derivatives')
 
 %% Play satellite scenario
 % Clean coordinates from negative altitudes

@@ -36,7 +36,7 @@ classdef satellite_simulation < handle
             %     6-by-1 array
             %   attitude - Euler rotation angles with in the order XYZ in degrees.
             %     3-by-1 array
-            %   angular_velocity - Initial angular velocity vector (ECI frame).
+            %   angular_velocity - Initial angular velocity vector in deg/s (ECI frame).
             %     3-by-1 array
             %   startTime - Start time of the simulation.
             %     datetime
