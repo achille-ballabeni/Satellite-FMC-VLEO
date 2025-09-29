@@ -79,14 +79,15 @@ kd = 0.022;
 kq = 0.0032;
 
 %% GPS parameters
-GPSHAccuracy   = 10;
-GPSVAccuracy   = 10;
-GPSVelAccuracy = 0.1;
+GPSHAccuracy   = 10; % [m]
+GPSVAccuracy   = 10; % [m]
+GPSVelAccuracy = 0.1; % [m/2]
 
 %% Camera parameters
 FL      = 50e-3;      % Focal length [m]
 L_pixel = 4.8e-6;     % Pixel size [m]
 fps     = 1/timeStep; % frame rate [Hz]
+K_optics = FL/(L_pixel*fps);
 
 % Axis pointing mount
 pointing_body = [0,0,1];
