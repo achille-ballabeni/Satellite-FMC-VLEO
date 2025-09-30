@@ -158,7 +158,7 @@ classdef satellite_simulation < handle
 
             % Extract timeseries values
             Rsat_ts = obj.simOut.yout{1}.Values;
-            Qin2body_ts = obj.simOut.yout{4}.Values;
+            Qeci2body_ts = obj.simOut.yout{4}.Values;
             
             % Setup satellite scenario object
             stopTime = obj.startTime + seconds(obj.simLength);
@@ -170,7 +170,7 @@ classdef satellite_simulation < handle
             
             % Add satellite
             sat = satellite(sc,Rsat_ts,"Name",options.Name);
-            pointAt(sat,Qin2body_ts,"ExtrapolationMethod","fixed"); %TODO: understand why the attitude does not span the whole simulation time
+            pointAt(sat,Qeci2body_ts,"ExtrapolationMethod","fixed"); %TODO: understand why the attitude does not span the whole simulation time
             groundTrack(sat);
             sat.Visual3DModel = "bus.glb";
             coordinateAxes(sat);
