@@ -13,7 +13,7 @@ function [z] = rhoMF(rho,parameters)
 
 arguments (Input)
     rho (1,1) double
-    parameters (17,1) double
+    parameters (18,1) double
 end
 
 arguments (Output)
@@ -28,6 +28,7 @@ Vsat = parameters(5:7);
 LOS_hat = parameters(8:10);
 Wsat = parameters(11:13);
 Qeci2body = parameters(14:17);
+K_optics = parameters(18);
 
 % Target position
 Rtar = Rsat + LOS_hat.*rho;
@@ -37,7 +38,7 @@ Rtar = Rsat + LOS_hat.*rho;
 Rtar_dot = target_velocity(rho,LOS_hat',Rsat',Vsat',Wsat');
 Vim_eci = Rtar_dot' - cross([0;0;Omega_E],Rtar);
 Vim_cam = qrot(Qeci2body,Vim_eci);
-z = 1.0417e+03./rho.*Vim_cam;
+z = K_optics./rho.*Vim_cam;
 
 % Remove third component
 z = z(1:2);

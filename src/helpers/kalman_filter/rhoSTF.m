@@ -13,7 +13,7 @@ function [rhok] = rhoSTF(rho,parameters)
 
 arguments (Input)
     rho (1,1) double
-    parameters (17,1) double
+    parameters (18,1) double
 end
 
 arguments (Output)
