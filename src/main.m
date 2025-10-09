@@ -1,34 +1,20 @@
 clear
-%% Satellite parameters
-mass = 12; % [kg]
-dimz = 360/1000; % [m]
-dimy = 100/1000; % [m]
-dimx = 226.3/1000; % [m]
-Izz = 1/12*mass*(dimx^2+dimy^2);
-Iyy = 1/12*mass*(dimx^2+dimz^2);
-Ixx = 1/12*mass*(dimy^2+dimz^2);
-Ixy = 0;
-Ixz = 0;
-Iyz = 0;
-
-% Inertia matrix
-I = [Ixx Ixy Ixz; Ixy Iyy Iyz; Ixz Iyz Izz];
 
 %% Orbital parameters and inital conditions
-Re = earthRadius;
-mi = 398600.418e9;
-a = Re+500e3;
-orbital_parameters = [a;0;0;0;0;0];
-T = period(a,mi);
-initial_attitude = [0;0;0];
-initial_angular_velocity = [0;0;360/T];
+a = 6378e3 + 250e3; % [m]
+e = 0;
+i = 0;
+raan = 237.3113; % [deg]
+orbital_parameters = [a;0;0;raan;0;0];
+initial_attitude = [0.6387; -0.3737; 0.6003; 0.3034];
+initial_angular_velocity = [0;0;0];
 startTime = datetime(2025,1,1,12,0,0);
 
 %% Run simulation
-timestep = 1;
-duration = 200;
+timestep = 0.1;
+duration = 10;
 cubesat = satellite_simulation(orbital_parameters,initial_attitude,initial_angular_velocity,startTime);
-cubesat.initialize_model("simulink/satellite_propagator.slx",duration=duration,timestep=timestep);
+cubesat.initialize_model(duration=duration,timestep=timestep);
 cubesat.simulate();
 
 %% Perform LOS analysis
