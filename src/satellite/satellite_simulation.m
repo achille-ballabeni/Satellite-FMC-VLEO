@@ -54,8 +54,8 @@ classdef satellite_simulation < handle
             obj.startTime = startTime;
         end
 
-        function obj = initialize_model(obj,options)
-            % INITIALIZE_MODEL Initializes simulink model with initial conditions.
+        function obj = set_model_parameters(obj,varargin)
+            % SET_MODEL_PARAMETERS Initializes simulink model with initial conditions.
             % Converts and extract class inputs to initial values for the 
             % simulink model.
             % 
@@ -68,29 +68,65 @@ classdef satellite_simulation < handle
             %     provided, the function will calculate the period based on
             %     the semi-major axis.
             %     1-by-1 double
+            %   timestep - Timestep to use for the simulation.
+            %     scalar
+            %   [param_name] - Any valid model parameter name with its override value.
             
-            arguments
-                obj
-                options.model_path (1,1) string = "TargetPosVel"
-                options.param_path (1,1) string = "ModelParameters"
-                options.duration = []
-                options.timestep double = 1
-            end
+            % Parse inputs to separate options from parameter overrides
+            p = inputParser;
+            p.KeepUnmatched = true;  % This allows us to capture parameter overrides
+            
+            % Define expected options
+            addParameter(p, 'model_path', "TargetPosVel", @(x) isstring(x) || ischar(x));
+            addParameter(p, 'param_path', "ModelParameters", @(x) isstring(x) || ischar(x));
+            addParameter(p, 'duration', [], @(x) isempty(x) || isnumeric(x));
+            addParameter(p, 'timestep', 1, @isnumeric);
+            
+            % Parse the inputs
+            parse(p, varargin{:});
+            options = p.Results;
+            paramUpdates = p.Unmatched;
 
             % Load additional parameters
-            params = ModelParameters(options.timestep,obj.orbital_parameters,obj.initial_attitude,obj.initial_angular_velocity,obj.startTime);
+            params = ModelParameters( ...
+                options.timestep, ...
+                obj.orbital_parameters, ...
+                obj.initial_attitude, ...
+                obj.initial_angular_velocity,obj.startTime);
+            
+            % Get valid parameter names
+            validParamNames = fieldnames(params);
+
+            % Process parameter overrides
+            if ~isempty(fieldnames(paramUpdates))
+                updateNames = fieldnames(paramUpdates);
+                for i = 1:numel(updateNames)
+                    paramName = updateNames{i};
+                    paramValue = paramUpdates.(paramName);
+                    
+                    % Check if parameter exists in the model
+                    if ismember(paramName, validParamNames)
+                        % Update the parameter value
+                        params.(paramName) = paramValue;
+                        fprintf('Parameter "%s" updated to %f.\n', paramName, paramValue);
+                    else
+                        % Warn if parameter doesn't exist
+                        warning('Parameter "%s" is not a valid model parameter and will be ignored.', paramName);
+                    end
+                end
+            end
 
             % Define simulation duration
-            if options.duration
+            if ~isempty(options.duration)
                 obj.simLength = options.duration;
             else
-                T = period(a,obj.mi);
-                obj.simLength = T;
+                obj.simLength = params.orbPeriod;
             end
 
             % Setup simulation parameters
             obj.simIn = Simulink.SimulationInput(options.model_path);
-            obj.simIn = obj.simIn.setModelParameter("StopTime", num2str(obj.simLength), ...
+            obj.simIn = obj.simIn.setModelParameter( ...
+                "StopTime", num2str(obj.simLength), ...
                 "Solver","ode4", ...
                 "FixedStep", num2str(options.timestep), ...
                 "AbsTol","1e-8", ...

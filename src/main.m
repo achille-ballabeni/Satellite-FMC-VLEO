@@ -14,7 +14,7 @@ startTime = datetime(2025,1,1,12,0,0);
 timestep = 0.1;
 duration = 10;
 cubesat = satellite_simulation(orbital_parameters,initial_attitude,initial_angular_velocity,startTime);
-cubesat.initialize_model(duration=duration,timestep=timestep);
+cubesat.set_model_parameters(duration=duration,timestep=timestep);
 cubesat.simulate();
 
 %% Perform LOS analysis
