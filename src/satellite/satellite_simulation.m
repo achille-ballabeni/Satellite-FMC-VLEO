@@ -24,6 +24,7 @@ classdef satellite_simulation < handle
         Rtar % Target position
         Vtar % Target velocity
         Wsat_b % Satellite angular velocity
+        results % Results of the simulations
     end
 
     methods
@@ -139,18 +140,49 @@ classdef satellite_simulation < handle
             end
         end
 
-        function obj = simulate(obj)
-            % RUN Run the simulink model.
+        function obj = simulate(obj,options)
+            % RUN Run a single simulation of the Simulink model.
+            %
+            % Input Arguments
+            %   iteration - Iteration number/ID under which store results.
+            %     scalar
 
-            obj.simOut = sim(obj.simIn);
-            obj.t = obj.simOut.tout;
+            arguments
+                obj 
+                options.iteration (1,1) int8 = 1
+            end
 
-            % Save the satellite position and attitude in ECI.
-            obj.Rsat = obj.simOut.yout{1}.Values.Data;
-            obj.Vsat = obj.simOut.yout{2}.Values.Data;
-            obj.Qeci2body = obj.simOut.yout{4}.Values.Data;
-            obj.Wsat_b = obj.simOut.yout{5}.Values.Data;
+            obj.results(options.iteration).simOut = sim(obj.simIn);
+            obj.results(options.iteration).t = obj.results(options.iteration).simOut.tout;
+
+            % Store the satellite position and attitude in ECI.
+            obj.Rsat = obj.results(options.iteration).simOut.yout{1}.Values.Data;
+            obj.Vsat = obj.results(options.iteration).simOut.yout{2}.Values.Data;
+            obj.Qeci2body = obj.results(options.iteration).simOut.yout{4}.Values.Data;
+            obj.Wsat_b = obj.results(options.iteration).simOut.yout{5}.Values.Data;
             obj.Qbody2eci = quatinv(obj.Qeci2body);
+
+        end
+
+        function obj = export_results(obj,options)
+            % EXPORT_RESULTS Saves simulation data to corresponding batch
+            % folder.
+            %
+            % Input Arguments
+            %   destination - Path to the folder where simulation data is saved.
+            %   string
+
+            arguments
+                obj
+                options.destination (1,1) string = "results"
+            end
+            
+            timestamp = string(datetime('now','Format','uuuu-MM-dd_HH-mm-ss'));
+            batch_folder = options.destination + "\" + timestamp;
+            mkdir(batch_folder);
+            results_file = batch_folder + "\" + "simout.mat";
+            results = obj.results;
+            save(results_file, "results")
 
         end
 
