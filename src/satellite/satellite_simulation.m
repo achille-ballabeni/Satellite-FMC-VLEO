@@ -8,22 +8,22 @@ classdef satellite_simulation < handle
     end
 
     properties
-        orbital_parameters % Initial orbital parameters
-        initial_attitude % Initial Euler rotation angles in the order XYZ
-        initial_angular_velocity % Initial angular velocity vector (ECI frame)
-        startTime % Start time of the simulation
+        orbital_parameters % Initial orbital parameters [a,e,i,raan,aop,ta]
+        initial_attitude % Initial attitude-defining quaternion
+        initial_angular_velocity % Initial angular velocity vector (ECI frame) [rad/s]
+        startTime % Start time of the simulation [datetime]
         simLength % Duration of the simulation [s]
         simIn % Simulink simulation input object
         simOut % Simulink simulation output object
         t % Time vector from simulation output
-        Rsat % Satellite position in ECI
-        Vsat % Satellite velocity in ECI
+        Rsat % Satellite position in ECI [m]
+        Vsat % Satellite velocity in ECI [m]
         Qeci2body % Attitude quaternion (inertial to body)
         Qbody2eci % Attitude quaternion (body to inertial)
-        Rlos % Line of sight position (from satellite to earth)
-        Rtar % Target position
-        Vtar % Target velocity
-        Wsat_b % Satellite angular velocity
+        Rlos % Line of sight position (from satellite to earth) [m]
+        Rtar % Target position [m]
+        Vtar % Target velocity [m]
+        Wsat_b % Satellite angular velocity [rad/s]
         results % Results of the simulations
     end
 
@@ -93,7 +93,8 @@ classdef satellite_simulation < handle
                 options.timestep, ...
                 obj.orbital_parameters, ...
                 obj.initial_attitude, ...
-                obj.initial_angular_velocity,obj.startTime);
+                obj.initial_angular_velocity, ...
+                obj.startTime);
             
             % Get valid parameter names
             validParamNames = fieldnames(params);
@@ -154,8 +155,11 @@ classdef satellite_simulation < handle
 
             obj.results(options.iteration).simOut = sim(obj.simIn);
             obj.results(options.iteration).t = obj.results(options.iteration).simOut.tout;
+            obj.t = obj.results(options.iteration).t;
 
             % Store the satellite position and attitude in ECI.
+            % NOTE: All these parameters will be removed once the
+            % post-processing is moved to analysis tools.
             obj.Rsat = obj.results(options.iteration).simOut.yout{1}.Values.Data;
             obj.Vsat = obj.results(options.iteration).simOut.yout{2}.Values.Data;
             obj.Qeci2body = obj.results(options.iteration).simOut.yout{4}.Values.Data;
@@ -207,8 +211,8 @@ classdef satellite_simulation < handle
             end
 
             % Extract timeseries values
-            Rsat_ts = obj.simOut.yout{1}.Values;
-            Qeci2body_ts = obj.simOut.yout{4}.Values;
+            Rsat_ts = obj.results(end).simOut.yout{1}.Values;
+            Qeci2body_ts = obj.results(end).simOut.yout{4}.Values;
             
             % Setup satellite scenario object
             stopTime = obj.startTime + seconds(obj.simLength);

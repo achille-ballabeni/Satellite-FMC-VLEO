@@ -21,10 +21,17 @@ D = -X / norm(X);
 
 % East unit vector
 E = cross(D, [0;0;1]);
-E = E / norm(E);
+% Avoid division by zero
+if norm(E) < eps
+    E = [1;0;0];
+else
+    E = E / norm(E);
+end
 
 % North unit vector
 N = cross(E, D);
+% Avoid division by zero
+N = N / norm(N);
 
 % Rotation matrix
 Rned2eci = [N, E, D];

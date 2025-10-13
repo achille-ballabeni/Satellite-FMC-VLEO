@@ -1,6 +1,6 @@
 function [Vtar, rho_dot] = target_velocity(rho,LOS_hat,Rsat,Vsat,Wsat)
 % TARGET_VELOCITY Computes the velocity of the line of sight intersection
-% wrt to the ECI frame.
+% wrt to the ECI frame, located at Rtar = Rsat + rho * LOS_hat.
 %
 % Input Arguments
 %   rho - Line of Sight modulus.

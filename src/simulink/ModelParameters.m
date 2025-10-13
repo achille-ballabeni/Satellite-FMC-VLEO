@@ -1,4 +1,22 @@
 function p = ModelParameters(timeStep,op,attitude,angular_velocity,startTime)
+    % MODELPARAMETERS Initializes spacecraft and simulation parameters.
+    %
+    % p = ModelParameters(timeStep, op, attitude, angular_velocity, startTime)
+    %
+    % Input Arguments:
+    %   timeStep - Simulation timestep [s]
+    %     scalar
+    %   op - Orbital parameters [sma, ecc, inc, RAAN, aop, truean]
+    %     6-by-1 array
+    %   attitude - Initial quaternion [q1 q2 q3 q4]
+    %     4-by-1 array
+    %   angular_velocity - Initial angular velocity [rad/s]
+    %     3-by-1 array
+    %   startTime - datetime object for simulation start
+    %     scalar
+    %
+    % Output Arguments:
+    % p - Structure containing all model and simulation parameters.
     %% Timestep
     p.timeStep = timeStep;
 
@@ -73,7 +91,7 @@ function p = ModelParameters(timeStep,op,attitude,angular_velocity,startTime)
     %% GPS parameters
     p.GPSHAccuracy   = 10; % [m]
     p.GPSVAccuracy   = 10; % [m]
-    p.GPSVelAccuracy = 0.1; % [m/2]
+    p.GPSVelAccuracy = 0.1; % [m/s]
     
     %% Camera parameters
     p.FL       = 50e-3;      % Focal length [m]
@@ -87,7 +105,7 @@ function p = ModelParameters(timeStep,op,attitude,angular_velocity,startTime)
     %% Kalman filter
     p.LoS_0      = p.H*transpose(quat2dcm(reshape(p.quat0, 1, [])))*p.pointing_body';
     p.b_0        = [0;0;0];
-    p.x0_Kfilter = [p.LoS_0,;p.b_0];
+    p.x0_Kfilter = [p.LoS_0;p.b_0];
     p.P0_Kfilter = blkdiag(eye(3), eye(3));
     
     p.Q_b    = 0.05*eye(3);
