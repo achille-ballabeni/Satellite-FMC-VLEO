@@ -1,34 +1,20 @@
 clear
-%% Satellite parameters
-mass = 12; % [kg]
-dimz = 360/1000; % [m]
-dimy = 100/1000; % [m]
-dimx = 226.3/1000; % [m]
-Izz = 1/12*mass*(dimx^2+dimy^2);
-Iyy = 1/12*mass*(dimx^2+dimz^2);
-Ixx = 1/12*mass*(dimy^2+dimz^2);
-Ixy = 0;
-Ixz = 0;
-Iyz = 0;
-
-% Inertia matrix
-I = [Ixx Ixy Ixz; Ixy Iyy Iyz; Ixz Iyz Izz];
 
 %% Orbital parameters and inital conditions
-Re = earthRadius;
-mi = 398600.418e9;
-a = Re+500e3;
-orbital_parameters = [a;0;0;0;0;0];
-T = period(a,mi);
-initial_attitude = [0;0;0];
-initial_angular_velocity = [0;0;360/T];
+a = 6378e3 + 250e3; % [m]
+e = 0;
+i = 0;
+raan = 237.3113; % [deg]
+orbital_parameters = [a;0;0;raan;0;0];
+initial_attitude = [0.6387; -0.3737; 0.6003; 0.3034];
+initial_angular_velocity = [0;0;0];
 startTime = datetime(2025,1,1,12,0,0);
 
 %% Run simulation
-timestep = 1;
-duration = 200;
+timestep = 0.1;
+duration = 10;
 cubesat = satellite_simulation(orbital_parameters,initial_attitude,initial_angular_velocity,startTime);
-cubesat.initialize_model("simulink/satellite_propagator.slx",duration=duration,timestep=timestep);
+cubesat.set_model_parameters(duration=duration,timestep=timestep);
 cubesat.simulate();
 
 %% Perform LOS analysis
@@ -68,7 +54,10 @@ plot3(R_gt_sat_eci(:,1), R_gt_sat_eci(:,2), R_gt_sat_eci(:,3))
 plot3(R_gt_tar_eci(:,1),R_gt_tar_eci(:,2),R_gt_tar_eci(:,3))
 axis equal
 grid on
-legend("Satellite","Sat ground track","LoS")
+legend("Satellite","Satellite ground track","LoS")
+xlabel("x [m]")
+ylabel("y [m]")
+zlabel("z [m]")
 title("ECI Ground Tracks")
 
 % Compare velocities
@@ -77,7 +66,9 @@ plot(ones(size(Vtar)).*cubesat.t,Vtar)
 hold on
 plot(ones(size(Vtar_numerical)).*t_der,Vtar_numerical,"x","LineWidth",1)
 legend("u - analytic","v - analytic","w - analytic","u - numerical","v - numerical","w - numerical")
-title("Velocity components [m/s]")
+xlabel("Time [s]")
+ylabel("Velocity [m/s]")
+title("Velocity components vs Time")
 grid on
 
 % Velocity relative errors
@@ -88,7 +79,7 @@ plot(t_der,Vtar_diff(:,1),"x","LineWidth",1.5)
 hold on
 plot(t_der,zeros(size(Vtar_diff(:,1))), 'r--') % Reference line at zero
 title('Relative error - u component')
-xlabel('Time step')
+xlabel('Time [s]')
 ylabel('Relative error')
 grid on
 
@@ -98,7 +89,7 @@ plot(t_der,Vtar_diff(:,2),"x","LineWidth",1.5)
 hold on
 plot(t_der,zeros(size(Vtar_diff(:,2))), 'r--') % Reference line at zero
 title('Relative error - v component')
-xlabel('Time step')
+xlabel('Time [s]')
 ylabel('Relative error')
 grid on
 
@@ -108,12 +99,12 @@ plot(t_der,Vtar_diff(:,3),"x","LineWidth",1.5)
 hold on
 plot(t_der,zeros(size(Vtar_diff(:,3))), 'r--') % Reference line at zero
 title('Relative error - w component')
-xlabel('Time step')
+xlabel('Time [s]')
 ylabel('Relative error')
 grid on
 
 % Adjust layout
-sgtitle('Velocity Differences: Vtar vs Vtar Numerical')
+sgtitle('Analytic vs Numerical Derivatives')
 
 %% Play satellite scenario
 % Clean coordinates from negative altitudes

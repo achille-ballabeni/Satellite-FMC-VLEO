@@ -1,4 +1,6 @@
 *.asv
 *.autosave
 *.slxc
+*.mat
+*.r202*
 slprj
