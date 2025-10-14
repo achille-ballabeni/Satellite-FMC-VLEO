@@ -34,7 +34,7 @@ if earth_model == "sphere"
     rho = sphere_intersection(Re,Rsat,LOS_hat);
 elseif earth_model == "WGS84"
     % Insersection between line of sight and the WGS84
-    % ellispoid https://en.wikipedia.org/wiki/World_Geodetic_System#WGS84
+    % ellipsoid https://en.wikipedia.org/wiki/World_Geodetic_System#WGS84
     a = 6378137.0;
     b = a;
     c = 6356752.314245;
@@ -49,11 +49,11 @@ Rtar = Rsat + Rlos;
 
 % Find ground tracks in ECI
 [R_gt_sat_eci, ~] = ground_tracks(Rsat,Re,"type","satellite","frame","eci","model","sphere");
-[R_gt_tar_eci, ~] = ground_tracks(Rsat,Re,"type","los","frame","eci","model","sphere","Rlos",Rlos);
+[R_gt_tar_eci, ~] = ground_tracks(Rtar,Re,"type","los","frame","eci","model","sphere","Rlos",Rlos);
 
 % Find ground tracks in ECEF
 [R_gt_sat_ecef, lla_sat] = ground_tracks(Rsat,Re,"type","satellite","frame","eci","model","sphere");
-[R_gt_tar_ecef, lla_tar] = ground_tracks(Rsat,Re,"type","los","frame","eci","model","sphere","Rlos",Rlos);
+[R_gt_tar_ecef, lla_tar] = ground_tracks(Rtar,Re,"type","los","frame","eci","model","sphere","Rlos",Rlos);
 
 % Latitude and longitude
 ll_sat = lla_sat(:,1:2);
