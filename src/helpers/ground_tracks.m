@@ -39,6 +39,8 @@ arguments (Input)
     options.type (1,1) string = "satellite"
     options.frame (1,1) string = "eci"
     options.model (1,1) string = "sphere"
+    options.startTime (1,1) datetime
+    options.t (:,1) double
 end
 
 arguments (Output)
@@ -61,7 +63,7 @@ end
 
 if options.frame == "ecef"
     % Find the timetsamps in UTC
-    t_utc = startTime + seconds(t);
+    t_utc = options.startTime + seconds(options.t);
 
     % Convert to ECEF
     Rgt = eci2ecef_vect(t_utc,Rgt);

@@ -34,7 +34,7 @@ if earth_model == "sphere"
     rho = sphere_intersection(Re,Rsat,LOS_hat);
 elseif earth_model == "WGS84"
     % Insersection between line of sight and the WGS84
-    % ellispoid https://en.wikipedia.org/wiki/World_Geodetic_System#WGS84
+    % ellipsoid https://en.wikipedia.org/wiki/World_Geodetic_System#WGS84
     a = 6378137.0;
     b = a;
     c = 6356752.314245;

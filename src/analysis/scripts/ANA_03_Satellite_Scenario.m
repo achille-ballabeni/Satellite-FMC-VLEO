@@ -1,9 +1,9 @@
-%% ANA_02_Ground_Tracks
+%% ANA_03_Satellite_Scenario
 
 % This scripts computes the ground track vector of the satellite or the
 % LOS.
 
-script_name = "ANA02";
+script_name = "ANA03";
 
 %% LOAD SIMULATION RESULTS
 if ~exist('data', 'var')
@@ -16,15 +16,22 @@ end
 Re = data(1).Re;
 t = data(1).t;
 startTime = data(1).startTime;
+simLength = data(1).simLength;
 Rsat = data(1).simOut.yout{1}.Values.Data;
 Vsat = data(1).simOut.yout{2}.Values.Data;
 Qeci2body = data(1).simOut.yout{4}.Values.Data;
 Wsat_body = data(1).simOut.yout{5}.Values.Data;
 
+% Extract timeseries values
+Rsat_ts = data(1).simOut.yout{1}.Values;
+Qeci2body_ts = data(1).simOut.yout{4}.Values;
+
 Qbody2eci = quatinv(Qeci2body);
 LOS_hat = quatrotate(Qbody2eci,[0,0,1]);
 
 earth_model = "sphere";
+sampleTime = 0.1;
+satName = "CubeSat";
 
 %% PERFORM ANALYSIS
 % Find direction of line of sight, considered as exiting from 
@@ -48,58 +55,44 @@ end
 Rlos = rho.*LOS_hat; 
 Rtar = Rsat + Rlos;
 
-% Find ground tracks in ECI
-[R_gt_sat_eci, ~] = ground_tracks(Rsat,Re, ...
-    "type","satellite", ...
-    "frame","eci", ...
-    "model","sphere");
-[R_gt_tar_eci, ~] = ground_tracks(Rtar,Re, ...
-    "type", "los", ...
-    "frame", "eci", ...
-    "model", "sphere", ...
-    "Rlos", Rlos);
-
 % Find ground tracks in ECEF
-[R_gt_sat_ecef, lla_sat] = ground_tracks(Rsat,Re, ...
-    "type","satellite", ...
+[~, lla_tar] = ground_tracks(Rtar,Re, ...
+    "type","los", ...
     "frame","ecef", ...
     "model","sphere", ...
-    "t",t, ...
-    "startTime",startTime);
-[R_gt_tar_ecef, lla_tar] = ground_tracks(Rtar,Re, ...
-    "type", "los", ...
-    "frame", "ecef", ...
-    "model", "sphere", ...
     "Rlos",Rlos, ...
     "t",t, ...
     "startTime",startTime);
 
 % Latitude and longitude
-ll_sat = lla_sat(:,1:2);
-ll_tar = lla_tar(:,1:2);
+lla_tar(:,3) = 0;
 
-%% PLOTTING
-% Plot ground tracks in ECEF
-figure("Name","ECEF Ground Tracks")
-geoplot(ll_sat(:,1),ll_sat(:,2))
-hold on
-geoplot(ll_tar(:,1),ll_tar(:,2))
-legend("Satellite","LoS")
-geobasemap("satellite")
-title("ECEF Ground Tracks")
-savefig(script_name+"_GtECEF")
+% Setup satellite scenario object
+stopTime = startTime + seconds(simLength);
+sc = satelliteScenario(startTime,stopTime,sampleTime);
+numericalPropagator(sc, ...
+    "GravitationalPotentialModel","point-mass", ...
+    "IncludeAtmosDrag",false, ...
+    "IncludeSRP",false, ...
+    "IncludeThirdBodyGravity",false);
 
-% Plot ground tracks in ECI
-figure("Name","ECI Ground Tracks")
-plot3(cubesat.Rsat(:,1),cubesat.Rsat(:,2),cubesat.Rsat(:,3))
-hold on
-plot3(R_gt_sat_eci(:,1), R_gt_sat_eci(:,2), R_gt_sat_eci(:,3))
-plot3(R_gt_tar_eci(:,1),R_gt_tar_eci(:,2),R_gt_tar_eci(:,3))
-axis equal
-grid on
-legend("Satellite","Satellite ground track","LoS")
-xlabel("x [m]")
-ylabel("y [m]")
-zlabel("z [m]")
-title("ECI Ground Tracks")
-savefig(script_name+"_GtECI")
+% Add satellite
+sat = satellite(sc,Rsat_ts,"Name",satName);
+pointAt(sat,Qeci2body_ts,"ExtrapolationMethod","fixed"); %TODO: understand why the attitude does not span the whole simulation time
+groundTrack(sat);
+sat.Visual3DModel = "SmallSat.glb";
+coordinateAxes(sat);
+
+% Add conical sensor
+los_sensor = conicalSensor(sat,"MaxViewAngle",1);
+fieldOfView(los_sensor);
+
+% LOS intersection
+platform(sc,timeseries(lla_tar,t),"Name","LOS_intersection");
+
+
+
+%% VISUALIZE
+% Play scenario
+v = satelliteScenarioViewer(sc,"CameraReferenceFrame","Inertial");
+camtarget(v,sat);

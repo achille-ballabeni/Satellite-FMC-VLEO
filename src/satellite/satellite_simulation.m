@@ -156,6 +156,8 @@ classdef satellite_simulation < handle
             obj.results(options.iteration).simOut = sim(obj.simIn);
             obj.results(options.iteration).t = obj.results(options.iteration).simOut.tout;
             obj.results(options.iteration).Re = obj.Re;
+            obj.results(options.iteration).startTime = obj.startTime;
+            obj.results(options.iteration).simLength = obj.simLength;
             obj.t = obj.results(options.iteration).t;
 
             % Store the satellite position and attitude in ECI.
@@ -266,7 +268,7 @@ classdef satellite_simulation < handle
                 rho = sphere_intersection(obj.Re,obj.Rsat,LOS_hat);
             elseif options.model == "WGS84"
                 % Insersection between line of sight and the WGS84
-                % ellispoid https://en.wikipedia.org/wiki/World_Geodetic_System#WGS84
+                % ellipsoid https://en.wikipedia.org/wiki/World_Geodetic_System#WGS84
                 a = 6378137.0;
                 b = a;
                 c = 6356752.314245;
