@@ -1,7 +1,7 @@
-function p = ModelParameters(timeStep,op,attitude,angular_velocity,startTime)
-    % MODELPARAMETERS Initializes spacecraft and simulation parameters.
+function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime)
+    % MODEL_PARAMETERS Initializes spacecraft and simulation parameters.
     %
-    % p = ModelParameters(timeStep, op, attitude, angular_velocity, startTime)
+    % p = model_parameters(timeStep, op, attitude, angular_velocity, startTime)
     %
     % Input Arguments:
     %   timeStep - Simulation timestep [s]
