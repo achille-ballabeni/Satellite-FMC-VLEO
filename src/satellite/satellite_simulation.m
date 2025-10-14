@@ -155,6 +155,7 @@ classdef satellite_simulation < handle
 
             obj.results(options.iteration).simOut = sim(obj.simIn);
             obj.results(options.iteration).t = obj.results(options.iteration).simOut.tout;
+            obj.results(options.iteration).Re = obj.Re;
             obj.t = obj.results(options.iteration).t;
 
             % Store the satellite position and attitude in ECI.

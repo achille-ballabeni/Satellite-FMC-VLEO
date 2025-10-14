@@ -13,7 +13,7 @@ else
 end
 
 %% PARAMETER INITIALIZATION and PRE-PROCESSING
-Re = 6378e3;
+Re = data(1).Re;
 t = data(1).t;
 Rsat = data(1).simOut.yout{1}.Values.Data;
 Vsat = data(1).simOut.yout{2}.Values.Data;
@@ -27,7 +27,7 @@ earth_model = "sphere";
 
 %% PERFORM ANALYSIS
 % Find direction of line of sight, considered as exiting from 
-% the x axis of the satellite.
+% the z axis of the satellite.
 
 if earth_model == "sphere"
     % Intersection between line of sight and earth surface
