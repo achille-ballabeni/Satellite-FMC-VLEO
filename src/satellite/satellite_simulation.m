@@ -178,7 +178,7 @@ classdef satellite_simulation < handle
 
             arguments
                 obj
-                options.destination (1,1) string = "results"
+                options.destination (1,1) string = "..\results"
             end
             
             timestamp = string(datetime('now','Format','uuuu-MM-dd_HH-mm-ss'));
@@ -257,7 +257,7 @@ classdef satellite_simulation < handle
             end
 
             % Find direction of line of sight, considered as exiting from 
-            % the x axis of the satellite.
+            % the z axis of the satellite.
             LOS_hat = quatrotate(obj.Qbody2eci,[0,0,1]);
 
             if options.model == "sphere"
@@ -271,7 +271,7 @@ classdef satellite_simulation < handle
                 c = 6356752.314245;
                 rho = ellipsoid_intersection([a,b,c],obj.Rsat,LOS_hat);
             else
-                error("The type %s is unknown for the LOS calculation", options.type)
+                error("The type %s is unknown for the LOS calculation", options.model)
             end
 
             % Find the LOS vector and target position vector
