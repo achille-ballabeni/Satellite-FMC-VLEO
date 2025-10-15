@@ -1,92 +1,113 @@
 classdef analysis_tool < handle
-    % BatchAnalyzer - Tool for analyzing batch simulation results
+    % ANALYSIS_TOOL Class for managing and running batch simulation
+    %               analyses.
     %
-    % Usage:
-    %   analyzer = BatchAnalyzer();              % Interactive folder selection
-    %   analyzer = BatchAnalyzer(batchPath);     % Specify path directly
-    %   analyzer.runAllAnalyses();               % Run all analysis scripts
-    %   analyzer.ru nAnalysis('analysisName');    % Run specific analysis
+    % This class provides methods to load simulation results from a batch
+    % folder and run analysis scripts on the data. It supports caching
+    % loaded data and allows running all or individual analysis scripts
+    % with all or a subset of simulations.
     
     properties (Access = private)
-        batchPath           % Path to batch folder
-        simData             % Cached simulation data from simOut.mat
+        batchPath % Path to batch folder
+        simData % Cached simulation data from simout.mat
         isDataLoaded = false % Flag indicating if data is loaded
     end
     
     methods (Access = public)
-        function obj = BatchAnalyzer(batchPath)
-            % Constructor - initialize analyzer with batch folder path
+        function obj = analysis_tool(options)
+            % ANALYSIS_TOOL Initialize the Analysis Tool class with path to
+            % batch folder and simulation ID to run.
             %
-            % Inputs:
-            %   batchPath - (optional) Path to batch folder containing simOut.mat
-            
-            if nargin < 1 || isempty(batchPath)
-                % No path specified, use interactive selection
-                batchPath = uigetdir(pwd, 'Select Batch Folder');
-                if batchPath == 0
-                    error('BatchAnalyzer:NoPath', 'No folder selected');
-                end
+            % Input Arguments
+            %   options.batchPath - The path to the batch folder. UI opens
+            %       if not assigned.
+            %     string
+
+            arguments
+                options.batchPath string = "";
             end
             
+            if options.batchPath == ""
+                % No path specified, use interactive selection
+                batchPath = string(uigetdir(pwd, 'Select Batch Folder'));
+            else
+                batchPath = options.batchPath;
+            end
+
             % Validate path exists
             if ~isfolder(batchPath)
-                error('BatchAnalyzer:InvalidPath', 'Path does not exist: %s', batchPath);
+                error("Path does not exist: %s", batchPath);
             end
             
+            % Assign batch path
             obj.batchPath = batchPath;
-            fprintf('Batch folder set to: %s\n', batchPath);
+            fprintf('Batch folder set to: %s\n', obj.batchPath);
         end
         
         function data = getData(obj)
-            % Get cached simulation data (auto-loads on first call)
-            %
-            % Returns:
-            %   data - Structure containing all variables from simOut.mat
+            % GETDATA Load simulation data from simout.mat if not cached.
             
             if ~obj.isDataLoaded
-                simOutFile = fullfile(obj.batchPath, 'simOut.mat');
-                
-                if ~isfile(simOutFile)
-                    error('BatchAnalyzer:FileNotFound', 'simOut.mat not found in: %s', obj.batchPath);
+                simOutFile = fullfile(obj.batchPath, "simout.mat");
+                try
+                    obj.simData = load(simOutFile).results;
+                    obj.isDataLoaded = true;
+                    fprintf('Loaded data from %s \n', simOutFile);
+                catch
+                    error('File simout.mat not found in %s.', obj.batchPath);
                 end
-                
-                fprintf('Loading data from: %s\n', simOutFile);
-                obj.simData = load(simOutFile);
-                obj.isDataLoaded = true;
-                fprintf('Data loaded successfully. Variables: %s\n', strjoin(fieldnames(obj.simData), ', '));
+            else
+                fprintf("Simulation data is already loaded. \n")
             end
-            
             data = obj.simData;
         end
         
-        function runAllAnalyses(obj)
-            % Run all analysis scripts in the batch folder
+        function runAllAnalyses(obj,options)
+            % RUNALLANALYSES Run all analysis scripts in the batch folder
+            %
+            % Input Arguments
+            %   options.simID - Simulation number used to run the analysis,
+            %       all simulations are run if not assigned.
+            %     scalar || 1D-array
+
+            arguments
+                obj 
+                options.simID int8 = 0
+            end
+
+            % Load simout data
+            obj.getData();
             
+            % Set which simulations to run
+            if options.simID == 0
+                simulations = 1:length(obj.simData);
+            else
+                simulations = option.simID;
+            end
+            
+            % Run all analysis scripts in the batch folder
             fprintf('\n=== Running All Analyses ===\n');
             
             % Find all .m files in batch folder
-            scriptFiles = dir(fullfile(obj.batchPath, '*.m'));
+            basePath = fileparts(mfilename("fullpath"));
+            scriptFiles = dir(fullfile(basePath,"scripts",'ANA_*.m'));
             
             if isempty(scriptFiles)
                 warning('No analysis scripts (.m files) found in: %s', obj.batchPath);
                 return;
             end
             
-            % Get data once (cached for all scripts)
-            data = obj.getData(); %#ok<NASGU>
-            
             % Run each script
-            for i = 1:length(scriptFiles)
-                scriptName = scriptFiles(i).name;
+            for k = 1:length(scriptFiles)
+                % Strip extension from filename
+                [~, scriptName] = fileparts(scriptFiles(k).name);
                 fprintf('\n--- Running: %s ---\n', scriptName);
+
                 try
-                    % Change to batch folder and run script
-                    currentDir = pwd;
-                    cd(obj.batchPath);
-                    run(scriptName);
-                    cd(currentDir);
+                    feval(string(scriptName), ...
+                        "data",obj.simData, ...
+                        "simulations",simulations)
                 catch ME
-                    cd(currentDir); % Ensure we return to original directory
                     warning('Script %s failed: %s', scriptName, ME.message);
                 end
             end
@@ -94,47 +115,56 @@ classdef analysis_tool < handle
             fprintf('\n=== All Analyses Complete ===\n');
         end
         
-        function runAnalysis(obj, scriptName)
-            % Run a specific analysis script by name
+        function runSingleAnalysis(obj, scriptNumber, options)
+            % RUNSINGLEANALYSIS Run a single analysis script.
             %
-            % Inputs:
-            %   scriptName - Name of script file (with or without .m extension)
+            % Input Arguments
+            %   scriptNumber - Identifier of analysis script to run.
+            %     string
+            %   options.simID - Simulation number used to run the analysis,
+            %       all simulations are run if not assigned.
+            %     scalar
+
+            arguments
+                obj 
+                scriptNumber string
+                options.simID int8 = 0
+            end
+
+            % Load simout data
+            obj.getData();
             
-            % Add .m extension if not present
-            if ~endsWith(scriptName, '.m')
-                scriptName = [scriptName '.m'];
+            % Set which simulations to run
+            if options.simID == 0
+                simulations = 1:length(obj.simData);
+            else
+                simulations = options.simID;
             end
             
-            scriptPath = fullfile(obj.batchPath, scriptName);
-            
-            % Check if script exists
-            if ~isfile(scriptPath)
-                error('BatchAnalyzer:ScriptNotFound', 'Script not found: %s', scriptPath);
-            end
-            
-            % Get data (cached)
-            data = obj.getData(); %#ok<NASGU>
+            basePath = fileparts(mfilename("fullpath"));
+            scriptFile = dir(fullfile(basePath,"scripts",strcat("ANA_",scriptNumber,"_*.m")));
+            [~, scriptName] = fileparts(scriptFile.name);
             
             fprintf('\n--- Running: %s ---\n', scriptName);
-            currentDir = pwd;
             try
-                cd(obj.batchPath);
-                run(scriptName);
-                cd(currentDir);
+                feval(scriptName, ...
+                    "data",obj.simData, ...
+                    "simulations",simulations)
             catch ME
-                cd(currentDir);
-                rethrow(ME);
+                warning('Script %s failed: %s', scriptName, ME.message);
             end
         end
+    end
         
     methods (Access = public)
         function path = getBatchPath(obj)
-            % Get the current batch folder path
+            % GETBATCHPATH Get the current batch folder path.
             path = obj.batchPath;
         end
         
         function clearCache(obj)
-            % Clear cached data to force reload on next getData() call
+            % CLEARCACHE Clear cached data to force reload on next
+            %            getData() call.
             obj.simData = [];
             obj.isDataLoaded = false;
             fprintf('Cache cleared.\n');
