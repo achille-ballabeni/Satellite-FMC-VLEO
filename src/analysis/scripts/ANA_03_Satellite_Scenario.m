@@ -1,15 +1,21 @@
-%% ANA_03_Satellite_Scenario
+function ANA_03_Satellite_Scenario(options)
 
-% This scripts computes the ground track vector of the satellite or the
-% LOS.
+% ANA_03_SATELLITE_SCENARIO This scripts computes the ground track vector of
+% the satellite or the LOS.
 
-script_name = "ANA03";
+arguments (Input)
+    options.iteration (1,1) = 1;
+    options.data struct = [];
+end
+
+script_name = "ANA_03";
 
 %% LOAD SIMULATION RESULTS
-if ~exist('data', 'var')
+if isempty(options.data)
     data = load_data().results;
 else
     fprintf("Simulation data is already loaded.\n")
+    data = options.data;
 end
 
 %% PARAMETER INITIALIZATION and PRE-PROCESSING
@@ -18,9 +24,7 @@ t = data(1).t;
 startTime = data(1).startTime;
 simLength = data(1).simLength;
 Rsat = data(1).simOut.yout{1}.Values.Data;
-Vsat = data(1).simOut.yout{2}.Values.Data;
 Qeci2body = data(1).simOut.yout{4}.Values.Data;
-Wsat_body = data(1).simOut.yout{5}.Values.Data;
 
 % Extract timeseries values
 Rsat_ts = data(1).simOut.yout{1}.Values;
@@ -90,9 +94,9 @@ fieldOfView(los_sensor);
 % LOS intersection
 platform(sc,timeseries(lla_tar,t),"Name","LOS_intersection");
 
-
-
 %% VISUALIZE
 % Play scenario
 v = satelliteScenarioViewer(sc,"CameraReferenceFrame","Inertial");
 camtarget(v,sat);
+
+end

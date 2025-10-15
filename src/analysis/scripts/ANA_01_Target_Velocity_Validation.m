@@ -1,24 +1,31 @@
-%% ANA_01_Target_Velocity_Validation
+function ANA_01_Target_Velocity_Validation(options)
 
-% This scripts compares the Target Velocity obtained from the analytical
-% formulation with the one computed numerically.
+% ANA_01_TARGET_VELOCITY_VALIDATION This scripts compares the Target
+% Velocity obtained from the analytical formulation with the one computed
+% numerically.
 
-script_name = "ANA01";
+arguments (Input)
+    options.iteration (1,1) = 1;
+    options.data struct = [];
+end
+
+script_name = "ANA_01";
 
 %% LOAD SIMULATION RESULTS
-if ~exist('data', 'var')
+if isempty(options.data)
     data = load_data().results;
 else
     fprintf("Simulation data is already loaded.\n")
+    data = options.data;
 end
 
 %% PARAMETER INITIALIZATION and PRE-PROCESSING
-Re = data(1).Re;
-t = data(1).t;
-Rsat = data(1).simOut.yout{1}.Values.Data;
-Vsat = data(1).simOut.yout{2}.Values.Data;
-Qeci2body = data(1).simOut.yout{4}.Values.Data;
-Wsat_body = data(1).simOut.yout{5}.Values.Data;
+Re = data(options.iteration).Re;
+t = data(options.iteration).t;
+Rsat = data(options.iteration).simOut.yout{1}.Values.Data;
+Vsat = data(options.iteration).simOut.yout{2}.Values.Data;
+Qeci2body = data(options.iteration).simOut.yout{4}.Values.Data;
+Wsat_body = data(options.iteration).simOut.yout{5}.Values.Data;
 
 Qbody2eci = quatinv(Qeci2body);
 LOS_hat = quatrotate(Qbody2eci,[0,0,1]);
@@ -62,7 +69,7 @@ Vtar_diff = abs(Vtar(idx,:) - Vtar_numerical)./Vtar(idx,:);
 %% PLOTTING
 % Compare velocities
 figure("Name","Velocity components vs Time")
-plot(ones(size(Vtar)).*cubesat.t,Vtar)
+plot(ones(size(Vtar)).*t,Vtar)
 hold on
 plot(ones(size(Vtar_numerical)).*t_der,Vtar_numerical,"x","LineWidth",1)
 legend("u - analytic","v - analytic","w - analytic","u - numerical","v - numerical","w - numerical")
@@ -107,3 +114,5 @@ grid on
 % Adjust layout
 sgtitle("Analytic vs Numerical Derivatives - Relative Errors")
 savefig(script_name+"_VelocityRelativeErrors")
+
+end

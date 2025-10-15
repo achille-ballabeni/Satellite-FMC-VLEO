@@ -1,15 +1,21 @@
-%% ANA_02_Ground_Tracks
+function ANA_02_Ground_Tracks(options)
 
-% This scripts computes the ground track vector of the satellite or the
-% LOS.
+% ANA_02_GROUND_TRACKS This scripts computes the ground track vector of
+% the satellite or the LOS.
 
-script_name = "ANA02";
+arguments (Input)
+    options.iteration (1,1) = 1;
+    options.data struct = [];
+end
+
+script_name = "ANA_02";
 
 %% LOAD SIMULATION RESULTS
-if ~exist('data', 'var')
+if isempty(options.data)
     data = load_data().results;
 else
     fprintf("Simulation data is already loaded.\n")
+    data = options.data;
 end
 
 %% PARAMETER INITIALIZATION and PRE-PROCESSING
@@ -17,9 +23,7 @@ Re = data(1).Re;
 t = data(1).t;
 startTime = data(1).startTime;
 Rsat = data(1).simOut.yout{1}.Values.Data;
-Vsat = data(1).simOut.yout{2}.Values.Data;
 Qeci2body = data(1).simOut.yout{4}.Values.Data;
-Wsat_body = data(1).simOut.yout{5}.Values.Data;
 
 Qbody2eci = quatinv(Qeci2body);
 LOS_hat = quatrotate(Qbody2eci,[0,0,1]);
@@ -60,13 +64,13 @@ Rtar = Rsat + Rlos;
     "Rlos", Rlos);
 
 % Find ground tracks in ECEF
-[R_gt_sat_ecef, lla_sat] = ground_tracks(Rsat,Re, ...
+[~, lla_sat] = ground_tracks(Rsat,Re, ...
     "type","satellite", ...
     "frame","ecef", ...
     "model","sphere", ...
     "t",t, ...
     "startTime",startTime);
-[R_gt_tar_ecef, lla_tar] = ground_tracks(Rtar,Re, ...
+[~, lla_tar] = ground_tracks(Rtar,Re, ...
     "type", "los", ...
     "frame", "ecef", ...
     "model", "sphere", ...
@@ -91,7 +95,7 @@ savefig(script_name+"_GtECEF")
 
 % Plot ground tracks in ECI
 figure("Name","ECI Ground Tracks")
-plot3(cubesat.Rsat(:,1),cubesat.Rsat(:,2),cubesat.Rsat(:,3))
+plot3(Rsat(:,1),Rsat(:,2),Rsat(:,3))
 hold on
 plot3(R_gt_sat_eci(:,1), R_gt_sat_eci(:,2), R_gt_sat_eci(:,3))
 plot3(R_gt_tar_eci(:,1),R_gt_tar_eci(:,2),R_gt_tar_eci(:,3))
@@ -103,3 +107,5 @@ ylabel("y [m]")
 zlabel("z [m]")
 title("ECI Ground Tracks")
 savefig(script_name+"_GtECI")
+
+end
