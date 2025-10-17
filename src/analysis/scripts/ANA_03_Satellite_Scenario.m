@@ -20,16 +20,16 @@ end
 
 %%%%%% PARAMETER INITIALIZATION and PRE-PROCESSING %%%%%%%%%%%%%%%%%%%%%%%%
 for k = options.simulations
-    Re = data(1).Re;
-    t = data(1).t;
-    startTime = data(1).startTime;
-    simLength = data(1).simLength;
-    Rsat = data(1).simOut.yout{1}.Values.Data;
-    Qeci2body = data(1).simOut.yout{4}.Values.Data;
+    Re = data(k).Re;
+    t = data(k).t;
+    startTime = data(k).startTime;
+    simLength = data(k).simLength;
+    Rsat = data(k).simOut.yout{1}.Values.Data;
+    Qeci2body = data(k).simOut.yout{4}.Values.Data;
 
     % Extract timeseries values
-    Rsat_ts = data(1).simOut.yout{1}.Values;
-    Qeci2body_ts = data(1).simOut.yout{4}.Values;
+    Rsat_ts = data(k).simOut.yout{1}.Values;
+    Qeci2body_ts = data(k).simOut.yout{4}.Values;
 
     Qbody2eci = quatinv(Qeci2body);
     LOS_hat = quatrotate(Qbody2eci,[0,0,1]);
