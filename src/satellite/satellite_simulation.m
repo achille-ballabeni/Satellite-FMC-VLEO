@@ -143,8 +143,13 @@ classdef satellite_simulation < handle
                 obj 
                 options.iteration (1,1) int8 = 1
             end
-
-            obj.results(options.iteration).simOut = sim(obj.simIn);
+            % Run simulation
+            fprintf("Running simulation %d ...\n",options.iteration)
+            simOut = sim(obj.simIn);
+            fprintf("Simulation %d completed!\n",options.iteration)
+            fprintf("########################\n")
+            % Store results
+            obj.results(options.iteration).simOut = simOut;
             obj.results(options.iteration).t = obj.results(options.iteration).simOut.tout;
             obj.results(options.iteration).Re = obj.Re;
             obj.results(options.iteration).startTime = obj.startTime;
@@ -174,9 +179,14 @@ classdef satellite_simulation < handle
             timestamp = string(datetime('now','Format','uuuu-MM-dd_HH-mm-ss'));
             batch_folder = fullfile(options.destination,timestamp);
             mkdir(batch_folder);
-            results_file = batch_folder + "\" + "simout.mat";
+            results_file = fullfile(batch_folder,"simout.mat");
             results = obj.results;
-            save(results_file, "results")
+            try 
+                save(results_file, "results")
+                fprintf("Exported results to %s",batch_folder)
+            catch ME
+                error("Unable to save files: %s",ME)
+            end
         end
     end
 end

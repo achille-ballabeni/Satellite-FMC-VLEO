@@ -5,7 +5,7 @@ function ANA_01_Target_Velocity_Validation(options)
 % numerically.
 
 arguments (Input)
-    options.simulations (:,1) = 1;
+    options.simulations (1,:) = 1;
     options.data struct = [];
 end
 
@@ -20,6 +20,12 @@ else
 end
 
 %%%%%% PARAMETER INITIALIZATION and PRE-PROCESSING %%%%%%%%%%%%%%%%%%%%%%%%
+% Create figures outside the loop
+fig1 = figure("Name","Velocity components vs Time");
+hold on
+
+fig2 = figure("Name","Analytic vs Numerical Derivatives - Relative Errors");
+
 for k = options.simulations
     Re = data(k).Re;
     t = data(k).t;
@@ -27,16 +33,13 @@ for k = options.simulations
     Vsat = data(k).simOut.yout{2}.Values.Data;
     Qeci2body = data(k).simOut.yout{4}.Values.Data;
     Wsat_body = data(k).simOut.yout{5}.Values.Data;
-    
     Qbody2eci = quatinv(Qeci2body);
     LOS_hat = quatrotate(Qbody2eci,[0,0,1]);
-    
     earth_model = "sphere";
-    
+
     %%%%%% PERFORM ANALYSIS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Find direction of line of sight, considered as exiting from 
+    % Find direction of line of sight, considered as exiting from
     % the z axis of the satellite.
-    
     if earth_model == "sphere"
         % Intersection between line of sight and earth surface
         rho = sphere_intersection(Re,Rsat,LOS_hat);
@@ -50,71 +53,85 @@ for k = options.simulations
     else
         error("The type %s is unknown for the LOS calculation", earth_model)
     end
-    
+
     % Find the LOS vector and target position vector
-    Rlos = rho.*LOS_hat; 
+    Rlos = rho.*LOS_hat;
     Rtar = Rsat + Rlos;
-    
+
     % Angular velocity in inertial frame
     Wsat_eci = quatrotate(Qbody2eci,Wsat_body);
-    
+
     % Target velocity
     Vtar = target_velocity(rho,LOS_hat,Rsat,Vsat,Wsat_eci);
-    
+
     % Find numerical derivative
     [Vtar_numerical,t_der,idx] = derivative(Rtar,t,method="edgepoint");
-    
+
     % Calculate the relative error
     Vtar_diff = abs(Vtar(idx,:) - Vtar_numerical)./Vtar(idx,:);
-    
+
     %%%%%% PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Compare velocities
-    figure("Name","Velocity components vs Time")
-    plot(ones(size(Vtar)).*t,Vtar)
-    hold on
-    plot(ones(size(Vtar_numerical)).*t_der,Vtar_numerical,"x","LineWidth",1)
-    legend("u - analytic","v - analytic","w - analytic","u - numerical","v - numerical","w - numerical")
-    xlabel("Time [s]")
-    ylabel("Velocity [m/s]")
-    title("Velocity components vs Time")
-    grid on
-    savefig(script_name+"_VelocityComponents")
-    
+    figure(fig1)
+    plot(ones(size(Vtar)).*t,Vtar,'DisplayName',sprintf('Sim %d - analytic',k))
+    plot(ones(size(Vtar_numerical)).*t_der,Vtar_numerical,"x","LineWidth",1,'DisplayName',sprintf('Sim %d - numerical',k))
+
     % Velocity relative errors
-    figure("Name","Analytic vs Numerical Derivatives - Relative Errors")
+    figure(fig2)
+
     % Subplot 1: Difference in u component
     subplot(3,1,1)
-    plot(t_der,Vtar_diff(:,1),"x","LineWidth",1.5)
+    plot(t_der,Vtar_diff(:,1),"x","LineWidth",1.5,'DisplayName',sprintf('Sim %d',k))
     hold on
-    plot(t_der,zeros(size(Vtar_diff(:,1))), 'r--') % Reference line at zero
-    title('Relative error - u component')
-    xlabel('Time [s]')
-    ylabel('Relative error')
-    grid on
-    
+
     % Subplot 2: Difference in v component
     subplot(3,1,2)
-    plot(t_der,Vtar_diff(:,2),"x","LineWidth",1.5)
+    plot(t_der,Vtar_diff(:,2),"x","LineWidth",1.5,'DisplayName',sprintf('Sim %d',k))
     hold on
-    plot(t_der,zeros(size(Vtar_diff(:,2))), 'r--') % Reference line at zero
-    title('Relative error - v component')
-    xlabel('Time [s]')
-    ylabel('Relative error')
-    grid on
-    
+
     % Subplot 3: Difference in w component
     subplot(3,1,3)
-    plot(t_der,Vtar_diff(:,3),"x","LineWidth",1.5)
+    plot(t_der,Vtar_diff(:,3),"x","LineWidth",1.5,'DisplayName',sprintf('Sim %d',k))
     hold on
-    plot(t_der,zeros(size(Vtar_diff(:,3))), 'r--') % Reference line at zero
-    title('Relative error - w component')
-    xlabel('Time [s]')
-    ylabel('Relative error')
-    grid on
-    
-    % Adjust layout
-    sgtitle("Analytic vs Numerical Derivatives - Relative Errors")
-    savefig(script_name+"_VelocityRelativeErrors")
 end
+
+% Finalize figure 1
+figure(fig1)
+legend("show")
+xlabel("Time [s]")
+ylabel("Velocity [m/s]")
+title("Velocity components vs Time")
+grid on
+savefig(script_name+"_VelocityComponents")
+
+% Finalize figure 2
+figure(fig2)
+
+subplot(3,1,1)
+plot(t_der,zeros(size(Vtar_diff(:,1))), 'r--','HandleVisibility','off') % Reference line at zero
+title('Relative error - u component')
+xlabel('Time [s]')
+ylabel('Relative error')
+legend("show")
+grid on
+
+subplot(3,1,2)
+plot(t_der,zeros(size(Vtar_diff(:,2))), 'r--','HandleVisibility','off') % Reference line at zero
+title('Relative error - v component')
+xlabel('Time [s]')
+ylabel('Relative error')
+legend("show")
+grid on
+
+subplot(3,1,3)
+plot(t_der,zeros(size(Vtar_diff(:,3))), 'r--','HandleVisibility','off') % Reference line at zero
+title('Relative error - w component')
+xlabel('Time [s]')
+ylabel('Relative error')
+legend("show")
+grid on
+
+sgtitle("Analytic vs Numerical Derivatives - Relative Errors")
+savefig(script_name+"_VelocityRelativeErrors")
 
 end

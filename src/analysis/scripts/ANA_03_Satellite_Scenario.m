@@ -4,7 +4,7 @@ function ANA_03_Satellite_Scenario(options)
 % the satellite or the LOS.
 
 arguments (Input)
-    options.simulations (:,1) = 1;
+    options.simulations (1,:) = 1;
     options.data struct = [];
 end
 

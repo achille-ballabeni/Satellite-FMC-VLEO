@@ -16,7 +16,7 @@ duration = 10;
 cubesat = satellite_simulation(orbital_parameters,initial_attitude,initial_angular_velocity,startTime);
 cubesat.set_model_parameters(duration=duration,timestep=timestep);
 cubesat.simulate();
-batch_path = cubesat.export_results("destination","../../results");
+batch_path = cubesat.export_results("destination","..\results");
 
 %% Perform Analysis
 analysis = analysis_tool("batchPath",batch_path);
