@@ -22,9 +22,10 @@ end
 %%%%%% PARAMETER INITIALIZATION and PRE-PROCESSING %%%%%%%%%%%%%%%%%%%%%%%%
 % Create figures outside the loop
 fig1 = figure("Name","Velocity components vs Time");
-hold on
 
 fig2 = figure("Name","Analytic vs Numerical Derivatives - Relative Errors");
+
+colors = lines(length(options.simulations));
 
 for k = options.simulations
     Re = data(k).Re;
@@ -73,35 +74,69 @@ for k = options.simulations
     %%%%%% PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Compare velocities
     figure(fig1)
-    plot(ones(size(Vtar)).*t,Vtar,'DisplayName',sprintf('Sim %d - analytic',k))
-    plot(ones(size(Vtar_numerical)).*t_der,Vtar_numerical,"x","LineWidth",1,'DisplayName',sprintf('Sim %d - numerical',k))
+
+    % Subplot 1: u component
+    subplot(3,1,1)
+    plot(t,Vtar(:,1),"Color",colors(k,:))
+    hold on
+    plot(t_der,Vtar_numerical(:,1),"x","LineWidth",1.5,"Color",colors(k,:))
+
+    % Subplot 2: v component
+    subplot(3,1,2)
+    plot(t,Vtar(:,2),"Color",colors(k,:))
+    hold on
+    plot(t_der,Vtar_numerical(:,2),"x","LineWidth",1.5,"Color",colors(k,:))
+
+    % Subplot 3: w component
+    subplot(3,1,3)
+    plot(t,Vtar(:,3),"Color",colors(k,:))
+    hold on
+    plot(t_der,Vtar_numerical(:,3),"x","LineWidth",1.5,"Color",colors(k,:))
 
     % Velocity relative errors
     figure(fig2)
 
     % Subplot 1: Difference in u component
     subplot(3,1,1)
-    plot(t_der,Vtar_diff(:,1),"x","LineWidth",1.5,'DisplayName',sprintf('Sim %d',k))
+    plot(t_der,Vtar_diff(:,1),"x","LineWidth",1.5)
     hold on
 
     % Subplot 2: Difference in v component
     subplot(3,1,2)
-    plot(t_der,Vtar_diff(:,2),"x","LineWidth",1.5,'DisplayName',sprintf('Sim %d',k))
+    plot(t_der,Vtar_diff(:,2),"x","LineWidth",1.5)
     hold on
 
     % Subplot 3: Difference in w component
     subplot(3,1,3)
-    plot(t_der,Vtar_diff(:,3),"x","LineWidth",1.5,'DisplayName',sprintf('Sim %d',k))
+    plot(t_der,Vtar_diff(:,3),"x","LineWidth",1.5)
     hold on
 end
 
 % Finalize figure 1
 figure(fig1)
-legend("show")
+
+subplot(3,1,1)
+p1 = plot(nan, nan,'Color','k','LineStyle','-');
+p2 = plot(nan, nan,'x','Color','k','LineWidth',1.5);
+legend([p1,p2],{"Analytical","Numerical"});
 xlabel("Time [s]")
 ylabel("Velocity [m/s]")
-title("Velocity components vs Time")
+title("U component")
 grid on
+
+subplot(3,1,2)
+xlabel("Time [s]")
+ylabel("Velocity [m/s]")
+title("V component")
+grid on
+
+subplot(3,1,3)
+xlabel("Time [s]")
+ylabel("Velocity [m/s]")
+title("W component")
+grid on
+
+sgtitle("Analytic vs Numerical Derivatives - Velocity Components")
 savefig(script_name+"_VelocityComponents")
 
 % Finalize figure 2
@@ -112,7 +147,6 @@ plot(t_der,zeros(size(Vtar_diff(:,1))), 'r--','HandleVisibility','off') % Refere
 title('Relative error - u component')
 xlabel('Time [s]')
 ylabel('Relative error')
-legend("show")
 grid on
 
 subplot(3,1,2)
@@ -120,7 +154,6 @@ plot(t_der,zeros(size(Vtar_diff(:,2))), 'r--','HandleVisibility','off') % Refere
 title('Relative error - v component')
 xlabel('Time [s]')
 ylabel('Relative error')
-legend("show")
 grid on
 
 subplot(3,1,3)
@@ -128,7 +161,6 @@ plot(t_der,zeros(size(Vtar_diff(:,3))), 'r--','HandleVisibility','off') % Refere
 title('Relative error - w component')
 xlabel('Time [s]')
 ylabel('Relative error')
-legend("show")
 grid on
 
 sgtitle("Analytic vs Numerical Derivatives - Relative Errors")
