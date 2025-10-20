@@ -183,9 +183,9 @@ classdef satellite_simulation < handle
             results = obj.results;
             try 
                 save(results_file, "results")
-                fprintf("Exported results to %s",batch_folder)
+                fprintf("Exported results to %s\n",batch_folder)
             catch ME
-                error("Unable to save files: %s",ME)
+                error("Unable to save files: %s\n",ME)
             end
         end
     end
