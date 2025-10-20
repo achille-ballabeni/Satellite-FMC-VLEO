@@ -102,3 +102,6 @@ Q_b    = 0.05*eye(3);
 Q_LoS  = 0.1*eye(3);
 Q_sys  = blkdiag(Q_LoS, Q_b);
 R_meas = norm(LoS_0)*L_pixel*fps/FL*Q_b;
+
+%% Control parameters
+controller_ON = 1;

@@ -113,4 +113,6 @@ function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime)
     p.Q_sys  = blkdiag(p.Q_LoS, p.Q_b);
     p.R_meas = norm(p.LoS_0)*p.L_pixel*p.fps/p.FL*p.Q_b;
 
+    %% Control switches
+    p.controller_ON = 1;
 end
