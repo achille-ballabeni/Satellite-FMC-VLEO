@@ -106,3 +106,4 @@ R_meas = norm(LoS_0)*L_pixel*fps/FL*Q_b;
 %% Control parameters
 controller_ON = 1;
 env_torques_ON = 1;
+quaternion_noise_ON = 0;

@@ -116,5 +116,6 @@ function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime)
     %% Control switches
     p.controller_ON = 1;
     p.torques_ON = 1;
+    p.quaternion_noise_ON = 1;
 
 end
