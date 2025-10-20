@@ -59,6 +59,7 @@ quaternion_bias = 360; % [arcsec]
 quaternion_sigma = 50/3; % [arcsec]
 rand_vec = [0, rand(), rand()];
 quaternion_bias = deg2rad(rand_vec./norm(rand_vec)*quaternion_bias./3600);
+angular_rate_noise_power = 1e-10;
 
 %% Other specifications
 res_dipole = 0.05;
@@ -113,3 +114,4 @@ R_meas = norm(LoS_0)*L_pixel*fps/FL*Q_b;
 controller_ON = 1;
 env_torques_ON = 1;
 quaternion_noise_ON = 1;
+angular_rate_noise_ON = 0;
