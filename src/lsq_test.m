@@ -10,19 +10,8 @@ for k=1:n
     parameters = out.parameters(k,:);
     uv_of = out.uv_of(k,:);
     
-    % Extract parameters    
-    dt = parameters(1);
-    Rsat = parameters(2:4);
-    Vsat = parameters(5:7);
-    LOS_hat = parameters(8:10);
-    Wsat = parameters(11:13);
-    
-    
-    % Compute velocity for backward propagation
-    [~, rho_dot] = target_velocity(rho_0,LOS_hat,Rsat,Vsat,Wsat);
-    
-    % Backward propagation
-    rho_prev = rho_0 - dt*rho_dot;
+    % Store previous estimate
+    rho_prev = rho_0;
     
     % Build param vector
     new_params = parameters;
@@ -54,15 +43,24 @@ grid on
 legend("rho hat","rho real","rho sensors")
 
 function res = J_cost(rho,parameters)
-    % Extract params
+
+    % Extract parameters    
+    dt = parameters(1);
+    Rsat = parameters(2:4);
+    Vsat = parameters(5:7);
+    LOS_hat = parameters(8:10);
+    Wsat = parameters(11:13);
     rho_prev = parameters(19);
     uv_of = parameters(20:21);
+
+    % Compute velocity for backward propagation
+    [~, rho_dot] = target_velocity(rho,LOS_hat,Rsat,Vsat,Wsat);
 
     % Calculate measures from estimate
     uv_from_rho = rhoMF(rho,parameters(1:18));
 
     % Residuals
-    res_state = rho_prev - rho;
+    res_state = rho_prev - rho_dot*dt;
     res_meas = uv_of - uv_from_rho;
 
     % Matrici aggiungere
