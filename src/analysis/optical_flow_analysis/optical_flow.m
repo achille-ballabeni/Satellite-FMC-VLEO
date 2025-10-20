@@ -1,4 +1,4 @@
-function [u_est, v_est] = OF(frame1, frame2, precFactor)
+function [u_est, v_est] = optical_flow(frame1, frame2, precFactor)
 
 % Motion estimation between two frames through cross correlation. This code
 % gives the same precision as the FFT upsampled cross correlation in a

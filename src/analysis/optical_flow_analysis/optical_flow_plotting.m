@@ -1,5 +1,5 @@
 clc, clear
-load OF_results.mat
+load optical_flow_results.mat
 
 % Plot MAE_U and MAE_V vs FPS for each resolution
 % Creates separate figures for each blur/continuity combination

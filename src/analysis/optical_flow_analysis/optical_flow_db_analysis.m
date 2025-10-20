@@ -12,9 +12,6 @@ resolution = [[2560,2560];
               [1080,1920];
               [540,960];
               [270,480]];
-% blur_vec = true;
-% continuity_vec = true;
-% resolution = [270,480];
 
 n = size(resolution, 1);
 m = length(blur_vec);
@@ -37,8 +34,12 @@ imaging = repmat(struct('resolution', [], ...
                         'data', substruct), n, 1);
 
                         
-% Preload all images
-imgFiles = dir(fullfile("D:\AKO\UNI_AERO\Tesi_Magistrale\VLEO_numerical_simulator\src\media\test_db",'*.jpg'));
+% Preload all images: this is bad practise if the datased it very large, it
+% would be more convenient to load one image at a time and process it with
+% the different settings. That would require a change in the logic of the
+% current script and I don't think it's worth it at the moment. If larger
+% databases are used, a change is required.
+imgFiles = dir(fullfile(fileparts(mfilename("fullpath")),'..\..\media\test_db','*.jpg'));
 nImages = length(imgFiles);
 images = cell(1, nImages);
 fprintf("Loading images ")
@@ -90,7 +91,7 @@ for i = 1:n
                 [original_img, shifted_img] = img_shift(image, u, v);
             end
             tic
-            [u_est(k), v_est(k)] = OF(original_img, shifted_img, 10);
+            [u_est(k), v_est(k)] = optical_flow(original_img, shifted_img, 10);
             t = toc;
             time = time + t;
             progressbar(k, nImages)
@@ -114,7 +115,7 @@ for i = 1:n
 end
 
 % Export results as .mat and .json
-save(fullfile(fileparts(mfilename("fullpath")),"OF_results"),"imaging")
+save(fullfile(fileparts(mfilename("fullpath")),"optical_flow_results"),"imaging")
 jsonStr = jsonencode(imaging, 'PrettyPrint', true);
 fid = fopen('OF_results.json', 'w');
 if fid == -1, error('Cannot create JSON file.'); end
