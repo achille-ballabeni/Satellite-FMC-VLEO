@@ -63,6 +63,12 @@ function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime)
     p.w0y       = angular_velocity(2);
     p.w0z       = angular_velocity(3);
     p.w0        = [p.w0x; p.w0y; p.w0z];
+
+    %% Attitude accuracy
+    p.quaternion_bias = 360; % [arcsec]
+    p.quaternion_sigma = 50/3; % [arcsec]
+    rand_vec = [0, rand(), rand()];
+    p.quaternion_bias = deg2rad(rand_vec./norm(rand_vec)*p.quaternion_bias./3600);
     
     %% Other specifications
     p.res_dipole = 0.05;

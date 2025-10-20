@@ -4,6 +4,10 @@ clear, clc, close all
 stopTime = 10;
 timeStep = 0.05;
 
+%% Random seed
+seed = 1088;
+rng(seed)
+
 %% 6U CubeSat
 mass = 12;
 dimz = 360/1000;
@@ -44,15 +48,17 @@ jdate = juliandate(yearValue, monthValue,  dayValue, ...
                    hourValue, minuteValue, secondValue);
 
 %% Initial Attitude
-roll      = deg2rad(0.2);
-pitch     = deg2rad(0.5);
-yaw       = deg2rad(0.1);
-quat0_Err = eul2quat([yaw, pitch, roll], "ZYX");
 quat0     = [0.6387; -0.3737; 0.6003; 0.3034];
-w0x       = deg2rad(1);
-w0y       = deg2rad(1);
-w0z       = deg2rad(1);
+w0x       = deg2rad(0);
+w0y       = deg2rad(0);
+w0z       = deg2rad(0);
 w0        = [w0x; w0y; w0z];
+
+%% Attitude accuracy
+quaternion_bias = 360; % [arcsec]
+quaternion_sigma = 50/3; % [arcsec]
+rand_vec = [0, rand(), rand()];
+quaternion_bias = deg2rad(rand_vec./norm(rand_vec)*quaternion_bias./3600);
 
 %% Other specifications
 res_dipole = 0.05;
@@ -106,4 +112,4 @@ R_meas = norm(LoS_0)*L_pixel*fps/FL*Q_b;
 %% Control parameters
 controller_ON = 1;
 env_torques_ON = 1;
-quaternion_noise_ON = 0;
+quaternion_noise_ON = 1;
