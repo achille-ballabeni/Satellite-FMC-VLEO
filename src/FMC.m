@@ -99,6 +99,9 @@ K_optics = FL/(L_pixel*fps);
 % Axis pointing mount
 pointing_body = [0,0,1];
 
+%% Filter selection
+estimation_filter = "EKF_rho";
+
 %% Kalman filter
 LoS_0      = H*transpose(quat2dcm(reshape(quat0, 1, [])))*pointing_body';
 b_0        = [0;0;0];

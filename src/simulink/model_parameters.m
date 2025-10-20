@@ -108,6 +108,9 @@ function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime)
     
     % Axis pointing mount
     p.pointing_body = [0,0,1];
+
+    %% Filter selection
+    p.estimation_filter = "EKF_rho";
     
     %% Kalman filter
     p.LoS_0      = p.H*transpose(quat2dcm(reshape(p.quat0, 1, [])))*p.pointing_body';
