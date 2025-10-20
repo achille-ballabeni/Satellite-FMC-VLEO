@@ -8,20 +8,19 @@ minuteValue = 0;
 secondValue = 0;
 StartTime   = datetime(yearValue, monthValue,  dayValue, ...
                        hourValue, minuteValue, secondValue);
-duration    = 200;
-StopTime    = StartTime + seconds(duration);
-sampleTime  = 0.1;
-sc          = satelliteScenario(StartTime, StopTime, sampleTime);
+
+StopTime    = StartTime + seconds(stopTime);
+sc          = satelliteScenario(StartTime, StopTime, timeStep);
 
 
-position = array2timetable(out.Rsat, "SampleRate", 1/sampleTime);
+position = array2timetable(out.Rsat, "SampleRate", 1/timeStep);
 position.data = [position.Var1, position.Var2, position.Var3];
 position(:, {'Var1', 'Var2', 'Var3'}) = [];
 
 sat = satellite(sc, position, "CoordinateFrame",  "inertial", ...
                                          "Name", "SpaceitUp");
 
-attitude = array2timetable(out.Qeci2body, "SampleRate", 1/sampleTime);
+attitude = array2timetable(out.Qeci2body, "SampleRate", 1/timeStep);
 attitude.data = [attitude.Var1, attitude.Var2, attitude.Var3, attitude.Var4];
 attitude(:, {'Var1', 'Var2', 'Var3', 'Var4'}) = [];
 
@@ -42,6 +41,6 @@ camtarget(viewer1, sat);
 % assumes the WGS84 Earth model.
 out.lla_tar(:,3) = 0;
 
-trajectory = geoTrajectory(out.lla_tar, 0:sampleTime:duration);
+trajectory = geoTrajectory(out.lla_tar, 0:timeStep:stopTime);
 
 pltf = platform(sc, trajectory, "Name", "Target");
