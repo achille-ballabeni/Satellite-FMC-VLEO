@@ -1,17 +1,25 @@
 clc, clear
 
 u = -155.2630; % Mean values from simulation, nadir pointing, SSO orbit
-v = 8.9959; % Mean values from simulation, nadir pointing, SSO orbit
-exposure_time = 1/1000;
-dt = 0.1;
+v = 50.9959; % Mean values from simulation, nadir pointing, SSO orbit
+dt = 0.5;
 
+exposure_times = [1/4, 1/8, 1/15, 1/30, 1/60, 1/125, 1/250, 1/500, 1/1000, 1/2000, 1/4000, 1/8000];
 blur_vec       = [false,false,true,true];
 continuity_vec = [false,true,true,false];
 resolution = [[2560,2560];
               [1440,2560];
               [1080,1920];
+              [720,1280];
               [540,960];
+              [360,640];
               [270,480]];
+
+% exposure_times = [1/500,5/1000];
+blur_vec       = [true,false];
+continuity_vec = [false,false];
+% resolution = [[720,1280];
+%               [540,960]];
 
 n = size(resolution, 1);
 m = length(blur_vec);
@@ -55,62 +63,67 @@ for i = 1:n
     imaging(i).resolution = resolution(i,:);
     imaging(i).u_real = u;
     imaging(i).v_real = v;
-    imaging(i).exposure_time = exposure_time;
     imaging(i).dt = dt;
 
-    % Loop through settings
-    for h = 1:m
-        % Set settings
-        blur = blur_vec(h);
-        cont = continuity_vec(h);
-        % Save settings
-        imaging(i).data(h).blur = blur;
-        imaging(i).data(h).continuity = cont;
-        fprintf("BLUR: %s - CONTINUITY: %s ", string(blur), string(cont))
-        % Preallocate
-        u_est = zeros(nImages,1);
-        v_est = zeros(nImages,1);
-        time = 0;
-        for k = 1:nImages
-            % Get image from preloaded cell array
-            image = images{k};
-            % Cropping rectangle
-            r = centerCropWindow2d(size(image), resolution(i,:));
-            if blur
-                blur_len = sqrt(u^2+v^2)*exposure_time/dt;
-                blur_angle = rad2deg(atan(v/u));
-                H = fspecial("motion", blur_len, blur_angle);
-                image = imfilter(image, H, "replicate");
+    for j = 1:length(exposure_times)
+        exposure_time = exposure_times(j);
+
+        % Loop through settings
+        for h = 1:m
+            index = h+(j-1)*m;
+            % Set settings
+            blur = blur_vec(h);
+            cont = continuity_vec(h);
+            % Save settings
+            imaging(i).data(index).blur = blur;
+            imaging(i).data(index).continuity = cont;
+            imaging(i).data(index).exposure = exposure_time;
+            fprintf("BLUR: %s - CONTINUITY: %s - EXPOSURE TIME: %f ", string(blur), string(cont), string(exposure_time))
+            % Preallocate
+            u_est = zeros(nImages,1);
+            v_est = zeros(nImages,1);
+            time = 0;
+            for k = 1:nImages
+                % Get image from preloaded cell array
+                image = images{k};
+                % Cropping rectangle
+                r = centerCropWindow2d(size(image), resolution(i,:));
+                if blur
+                    blur_len = sqrt(u^2+v^2)*exposure_time/dt;
+                    blur_angle = rad2deg(atan(v/u));
+                    H = fspecial("motion", blur_len, blur_angle);
+                    image = imfilter(image, H, "replicate");
+                end
+                if cont
+                    [original_img, shifted_img] = img_shift(image, u, v);
+                    original_img = imcrop(original_img, r);
+                    shifted_img = imcrop(shifted_img, r);
+                else
+                    image = imcrop(image, r);
+                    [original_img, shifted_img] = img_shift(image, u, v);
+                end
+                tic
+                [u_est(k), v_est(k)] = optical_flow(original_img, shifted_img, 10);
+                t = toc;
+                time = time + t;
+                progressbar(k, nImages)
             end
-            if cont
-                [original_img, shifted_img] = img_shift(image, u, v);
-                original_img = imcrop(original_img, r);
-                shifted_img = imcrop(shifted_img, r);
-            else
-                image = imcrop(image, r);
-                [original_img, shifted_img] = img_shift(image, u, v);
-            end
-            tic
-            [u_est(k), v_est(k)] = optical_flow(original_img, shifted_img, 10);
-            t = toc;
-            time = time + t;
-            progressbar(k, nImages)
+            fprintf("\n")
+            [s_u, m_u] = std(u_est);
+            [s_v, m_v] = std(v_est);
+            merror_u = abs(m_u-u)/abs(u)*100;
+            merror_v = abs(m_v-v)/abs(v)*100;
+            fps = nImages/time;
+            % Save data
+            imaging(i).data(index).u_est = u_est;
+            imaging(i).data(index).v_est = v_est;
+            imaging(i).data(index).mae_u = merror_u;
+            imaging(i).data(index).mae_v = merror_v;
+            imaging(i).data(index).std_u = s_u;
+            imaging(i).data(index).std_v = s_v;
+            imaging(i).data(index).time = time;
+            imaging(i).data(index).fps = fps;
         end
-        fprintf("\n")
-        [s_u, m_u] = std(u_est);
-        [s_v, m_v] = std(v_est);
-        merror_u = abs(m_u-u);
-        merror_v = abs(m_v-v);
-        fps = nImages/time;
-        % Save data
-        imaging(i).data(h).u_est = u_est;
-        imaging(i).data(h).v_est = v_est;
-        imaging(i).data(h).mae_u = merror_u;
-        imaging(i).data(h).mae_v = merror_v;
-        imaging(i).data(h).std_u = s_u;
-        imaging(i).data(h).std_v = s_v;
-        imaging(i).data(h).time = time;
-        imaging(i).data(h).fps = fps;
     end
 end
 
