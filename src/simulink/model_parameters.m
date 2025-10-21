@@ -1,4 +1,4 @@
-function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime)
+function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime,ID)
     % MODEL_PARAMETERS Initializes spacecraft and simulation parameters.
     %
     % p = model_parameters(timeStep, op, attitude, angular_velocity, startTime)
@@ -14,9 +14,14 @@ function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime)
     %     3-by-1 array
     %   startTime - datetime object for simulation start
     %     scalar
+    %   iteration - ID of the iteration 
     %
     % Output Arguments:
     % p - Structure containing all model and simulation parameters.
+    %% Random seed
+    seed = 1088 + ID;
+    rng(seed)
+
     %% Timestep
     p.timeStep = timeStep;
 
@@ -63,6 +68,13 @@ function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime)
     p.w0y       = angular_velocity(2);
     p.w0z       = angular_velocity(3);
     p.w0        = [p.w0x; p.w0y; p.w0z];
+
+    %% Attitude accuracy
+    p.quaternion_bias = 360; % [arcsec]
+    p.quaternion_sigma = 50/3; % [arcsec]
+    rand_vec = [0, rand(), rand()];
+    p.quaternion_bias = deg2rad(rand_vec./norm(rand_vec)*p.quaternion_bias./3600);
+    p.angular_rate_noise_power = 1e-10;
     
     %% Other specifications
     p.res_dipole = 0.05;
@@ -101,16 +113,18 @@ function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime)
     
     % Axis pointing mount
     p.pointing_body = [0,0,1];
+
+    %% Filter selection
+    p.estimation_filter = "EKF_rho";
     
-    %% Kalman filter
-    p.LoS_0      = p.H*transpose(quat2dcm(reshape(p.quat0, 1, [])))*p.pointing_body';
-    p.b_0        = [0;0;0];
-    p.x0_Kfilter = [p.LoS_0;p.b_0];
-    p.P0_Kfilter = blkdiag(eye(3), eye(3));
-    
-    p.Q_b    = 0.05*eye(3);
-    p.Q_LoS  = 0.1*eye(3);
-    p.Q_sys  = blkdiag(p.Q_LoS, p.Q_b);
-    p.R_meas = norm(p.LoS_0)*p.L_pixel*p.fps/p.FL*p.Q_b;
+    %% Filter parameters
+    p.Q = 1;
+    p.rho_0 = 249990.88;
+
+    %% Control switches
+    p.controller_ON = 1;
+    p.env_torques_ON = 1;
+    p.quaternion_noise_ON = 1;
+    p.angular_rate_noise_ON = 0;
 
 end

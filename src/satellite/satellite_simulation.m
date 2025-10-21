@@ -54,13 +54,13 @@ classdef satellite_simulation < handle
             % Input Arguments
             %   model_path - Path to the Simulink model as a string.
             %     string scalar
-            %   param_path - Path to Simulink model parameter file.
-            %     string scalar
             %   duration - Duration of the simulation in seconds. If not
             %     provided, the function will calculate the period based on
             %     the semi-major axis.
             %     1-by-1 double
             %   timestep - Timestep to use for the simulation.
+            %     scalar
+            %   seedID - Seed number for random generated parameters.
             %     scalar
             %   [param_name] - Any valid model parameter name with its override value.
             
@@ -70,9 +70,9 @@ classdef satellite_simulation < handle
             
             % Define expected options
             addParameter(p, 'model_path', "TargetPosVel", @(x) isstring(x) || ischar(x));
-            addParameter(p, 'param_path', "ModelParameters", @(x) isstring(x) || ischar(x));
             addParameter(p, 'duration', [], @(x) isempty(x) || isnumeric(x));
             addParameter(p, 'timestep', 1, @isnumeric);
+            addParameter(p, 'seedID', 0, @isnumeric);
             
             % Parse the inputs
             parse(p, varargin{:});
@@ -85,7 +85,8 @@ classdef satellite_simulation < handle
                 obj.orbital_parameters, ...
                 obj.initial_attitude, ...
                 obj.initial_angular_velocity, ...
-                obj.startTime);
+                obj.startTime, ...
+                options.seedID);
             
             % Get valid parameter names
             validParamNames = fieldnames(params);
