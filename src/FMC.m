@@ -102,16 +102,9 @@ pointing_body = [0,0,1];
 %% Filter selection
 estimation_filter = "EKF_rho";
 
-%% Kalman filter
-LoS_0      = H*transpose(quat2dcm(reshape(quat0, 1, [])))*pointing_body';
-b_0        = [0;0;0];
-x0_Kfilter = [LoS_0,;b_0];
-P0_Kfilter = blkdiag(eye(3), eye(3));
-
-Q_b    = 0.05*eye(3);
-Q_LoS  = 0.1*eye(3);
-Q_sys  = blkdiag(Q_LoS, Q_b);
-R_meas = norm(LoS_0)*L_pixel*fps/FL*Q_b;
+%% Filter parameters
+Q = 1;
+rho_0 = 249990.88;
 
 %% Control parameters
 controller_ON = 1;

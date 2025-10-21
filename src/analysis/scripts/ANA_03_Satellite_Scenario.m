@@ -24,12 +24,12 @@ for k = options.simulations
     t = data(k).t;
     startTime = data(k).startTime;
     simLength = data(k).simLength;
-    Rsat = data(k).simOut.yout{1}.Values.Data;
-    Qeci2body = data(k).simOut.yout{4}.Values.Data;
+    Rsat = data(k).simOut.X_eci.Data;
+    Qeci2body = data(k).simOut.Q_eci2body.Data;
 
     % Extract timeseries values
-    Rsat_ts = data(k).simOut.yout{1}.Values;
-    Qeci2body_ts = data(k).simOut.yout{4}.Values;
+    Rsat_ts = data(k).simOut.X_eci;
+    Qeci2body_ts = data(k).simOut.Q_eci2body;
 
     Qbody2eci = quatinv(Qeci2body);
     LOS_hat = quatrotate(Qbody2eci,[0,0,1]);
