@@ -5,7 +5,7 @@ function [rhok] = rhoSTF(rho,parameters)
 %  rho - LOS modulus at timestep k, in this case it the state of the KF.
 %    scalar
 %  parameters - Parameters for the state transition function: [dt,Rsat,Vsat,LOS_hat,W_sat,Qeci2body]
-%    17-by-1 array
+%    18-by-1 array
 %
 % Output Arguments
 %  rhok - LOS modulus at timestep k+1.

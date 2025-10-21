@@ -1,4 +1,4 @@
-function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime)
+function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime,ID)
     % MODEL_PARAMETERS Initializes spacecraft and simulation parameters.
     %
     % p = model_parameters(timeStep, op, attitude, angular_velocity, startTime)
@@ -14,9 +14,14 @@ function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime)
     %     3-by-1 array
     %   startTime - datetime object for simulation start
     %     scalar
+    %   iteration - ID of the iteration 
     %
     % Output Arguments:
     % p - Structure containing all model and simulation parameters.
+    %% Random seed
+    seed = 1088 + ID;
+    rng(seed)
+
     %% Timestep
     p.timeStep = timeStep;
 

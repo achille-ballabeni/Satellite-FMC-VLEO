@@ -5,7 +5,7 @@ function [z] = rhoMF(rho,parameters)
 %  rho - LOS modulus at timestep k, in this case it the state of the KF.
 %    scalar
 %  parameters - Parameters for the measurements function: [dt,Rsat,Vsat,LOS_hat,W_sat,Qeci2body]
-%    17-by-1 array
+%    18-by-1 array
 %
 % Output Arguments
 %  z - Pixel shifts [u,v] at timestep k.
@@ -34,7 +34,6 @@ K_optics = parameters(18);
 Rtar = Rsat + LOS_hat.*rho;
 
 % Measurement model
-% TODO: make this a helper function, remove hardcoded values.
 Rtar_dot = target_velocity(rho,LOS_hat',Rsat',Vsat',Wsat');
 Vim_eci = Rtar_dot' - cross([0;0;Omega_E],Rtar);
 Vim_cam = qrot(Qeci2body,Vim_eci);
