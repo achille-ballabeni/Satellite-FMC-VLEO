@@ -133,7 +133,7 @@ classdef satellite_simulation < handle
             end
         end
 
-        function obj = simulate(obj,options)
+        function simOut = simulate(obj,options)
             % RUN Run a single simulation of the Simulink model.
             %
             % Input Arguments

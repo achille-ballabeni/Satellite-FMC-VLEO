@@ -1,10 +1,11 @@
 clc, clear
 
-u = -155.2630; % Mean values from simulation, nadir pointing, SSO orbit
-v = 50.9959; % Mean values from simulation, nadir pointing, SSO orbit
+% Steady state values from simulation, nadir pointing, SSO orbit
+u = -156.63;
+v = 8.74;
 dt = 0.5;
 
-exposure_times = [1/4, 1/8, 1/15, 1/30, 1/60, 1/125, 1/250, 1/500, 1/1000, 1/2000, 1/4000, 1/8000];
+exposure_times = [1/15, 1/30, 1/60, 1/125, 1/250, 1/500, 1/1000];
 blur_vec       = [false,false,true,true];
 continuity_vec = [false,true,true,false];
 resolution = [[2560,2560];
@@ -14,12 +15,6 @@ resolution = [[2560,2560];
               [540,960];
               [360,640];
               [270,480]];
-
-% exposure_times = [1/500,5/1000];
-blur_vec       = [true,false];
-continuity_vec = [false,false];
-% resolution = [[720,1280];
-%               [540,960]];
 
 n = size(resolution, 1);
 m = length(blur_vec);
@@ -42,7 +37,7 @@ imaging = repmat(struct('resolution', [], ...
                         'data', substruct), n, 1);
 
                         
-% Preload all images: this is bad practise if the datased it very large, it
+% Preload all images: this is bad practice if the dataset it very large, it
 % would be more convenient to load one image at a time and process it with
 % the different settings. That would require a change in the logic of the
 % current script and I don't think it's worth it at the moment. If larger
@@ -109,10 +104,13 @@ for i = 1:n
                 progressbar(k, nImages)
             end
             fprintf("\n")
-            [s_u, m_u] = std(u_est);
-            [s_v, m_v] = std(v_est);
-            merror_u = abs(m_u-u)/abs(u)*100;
-            merror_v = abs(m_v-v)/abs(v)*100;
+            % Exclude outliers from the error computation.
+            out_u = abs(u_est-u)<5;
+            out_v = abs(v_est-v)<5;
+            [s_u, m_u] = std(u_est(out_u));
+            [s_v, m_v] = std(v_est(out_v));
+            merror_u = abs(m_u-u);
+            merror_v = abs(m_v-v);
             fps = nImages/time;
             % Save data
             imaging(i).data(index).u_est = u_est;
