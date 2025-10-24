@@ -16,6 +16,7 @@ classdef satellite_simulation < handle
         simIn % Simulink simulation input object
         t % Time vector from simulation output
         results % Results of the simulations
+        simIn_params % Input parameters of the model
     end
 
     methods
@@ -131,9 +132,12 @@ classdef satellite_simulation < handle
             for k = 1:numel(paramNames)
                 obj.simIn = obj.simIn.setVariable(paramNames{k}, params.(paramNames{k}));
             end
+
+            % Save params for export
+            obj.simIn_params = params;
         end
 
-        function simOut = simulate(obj,options)
+        function simulate(obj,options)
             % RUN Run a single simulation of the Simulink model.
             %
             % Input Arguments
@@ -156,6 +160,8 @@ classdef satellite_simulation < handle
             obj.results(options.iteration).startTime = obj.startTime;
             obj.results(options.iteration).simLength = obj.simLength;
             obj.t = obj.results(options.iteration).t;
+            % Store simIn settings
+            obj.results(options.iteration).simIn = obj.simIn_params;
         end
 
         function batch_folder = export_results(obj,options)

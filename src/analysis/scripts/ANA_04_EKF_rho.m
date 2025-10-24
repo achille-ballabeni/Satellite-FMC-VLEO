@@ -34,7 +34,7 @@ for k = options.simulations
     t = data.t;
 
     % Earth rotation
-    We = [0,0,7.2921159e-5]; %TODO: remove hardcoded value
+    We = [0,0,data.simIn.Omega_E];
 
     % Filter state
     rho_real = data.simOut.rho_real.Data;
@@ -52,16 +52,16 @@ for k = options.simulations
     z = [u_of,v_of];
 
     % Filter inputs
-    dt = data.t(2)-data.t(1);
+    dt = data.simIn.timeStep;
     Rsat_GPS = data.simOut.X_eci_GPS.Data;
     Vsat_GPS = data.simOut.V_eci_GPS.Data;
     LOS_hat_eci_sensors = data.simOut.LOS_hat_eci_sensors.Data;
     W_sat_eci_sensors = data.simOut.Wsat_eci_sensors.Data;
     Q_eci2body_sensors = data.simOut.Q_eci2body_sensors.Data;
-    K_optics = 5.208333333333334e+03; % TODO: Remove Hardcoded Value
+    K_optics = data.simIn.K_optics;
 
     % Filter tuning
-    Q = 20;
+    Q = 1;
     P = 20;
     R = eye(2)*0.1;
     
@@ -140,7 +140,7 @@ figure(fig2)
 p1 = plot(nan, nan,'Color','k','LineStyle','-');
 p2 = plot(nan, nan,'x','Color','k','LineWidth',1.5);
 p3 = plot(nan, nan,'--','Color','k','LineWidth',1.5);
-legend([p1,p2,p3],{"Real","Optical Flow","Sensors"});
+legend([p1,p2,p3],{"Real","Optical Flow","Estimate"});
 xlabel("Time [s]")
 ylabel("u [px]")
 title("U Estimate vs Real")
@@ -152,7 +152,7 @@ figure(fig3)
 p1 = plot(nan, nan,'Color','k','LineStyle','-');
 p2 = plot(nan, nan,'x','Color','k','LineWidth',1.5);
 p3 = plot(nan, nan,'--','Color','k','LineWidth',1.5);
-legend([p1,p2,p3],{"Real","Optical Flow","Sensors"});
+legend([p1,p2,p3],{"Real","Optical Flow","Estimate"});
 xlabel("Time [s]")
 ylabel("v [px]")
 title("V Estimate vs Real")
