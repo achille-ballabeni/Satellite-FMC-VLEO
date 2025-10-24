@@ -4,7 +4,7 @@ function [z] = rhoMF(rho,parameters)
 % Input Arguments
 %  rho - LOS modulus at timestep k, in this case it the state of the KF.
 %    scalar
-%  parameters - Parameters for the measurements function: [dt,Rsat,Vsat,LOS_hat,W_sat,Qeci2body]
+%  parameters - Parameters for the measurements function: [dt,Rsat,Vsat,LOS_hat,W_sat_eci,Qeci2body,K_optics]
 %    18-by-1 array
 %
 % Output Arguments
