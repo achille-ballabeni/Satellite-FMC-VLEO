@@ -102,7 +102,7 @@ classdef satellite_simulation < handle
                     if ismember(paramName, validParamNames)
                         % Update the parameter value
                         params.(paramName) = paramValue;
-                        fprintf('Parameter "%s" updated to %f.\n', paramName, paramValue);
+                        fprintf('Parameter "%s" updated to %s.\n', paramName, string(paramValue));
                     else
                         % Warn if parameter doesn't exist
                         warning('Parameter "%s" is not a valid model parameter and will be ignored.', paramName);
