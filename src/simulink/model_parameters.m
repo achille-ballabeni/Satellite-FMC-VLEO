@@ -74,7 +74,7 @@ function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime,ID
     p.quaternion_sigma = 50/3; % [arcsec]
     rand_vec = [0, rand(), rand()];
     p.quaternion_bias = deg2rad(rand_vec./norm(rand_vec)*p.quaternion_bias./3600);
-    p.angular_rate_noise_power = 1e-10;
+    p.angular_rate_noise_power = 1e-11;
     
     %% Other specifications
     p.res_dipole = 0.05;
@@ -124,6 +124,8 @@ function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime,ID
     %% Control switches
     p.controller_ON = 1;
     p.env_torques_ON = 1;
+    p.position_gps_ON = 1;
+    p.velocity_gps_ON = 1;
     p.quaternion_noise_ON = 1;
     p.angular_rate_noise_ON = 0;
 

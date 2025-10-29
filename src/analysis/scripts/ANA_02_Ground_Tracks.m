@@ -7,7 +7,7 @@ arguments (Input)
 end
 script_name = "ANA_02";
 
-%%%%% LOAD SIMULATION RESULTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%% LOAD SIMULATION RESULTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if isempty(options.data)
     data = load_data().results;
 else
