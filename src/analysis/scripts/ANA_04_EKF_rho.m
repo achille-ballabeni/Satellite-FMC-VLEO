@@ -31,34 +31,34 @@ colors = lines(length(options.simulations));
 
 for k = options.simulations
     % Time
-    t = data.t;
+    t = data(k).t;
 
     % Earth rotation
-    We = [0,0,data.simIn.Omega_E];
+    We = [0,0,data(k).simIn.Omega_E];
 
     % Filter state
-    rho_real = data.simOut.rho_real.Data;
-    rho_sensors = data.simOut.rho_sensors.Data;
+    rho_real = data(k).simOut.rho_real.Data;
+    rho_sensors = data(k).simOut.rho_sensors.Data;
     rho_0 = rho_sensors(1);
     rho = zeros(size(t));
 
     % Filter measurements
-    u_real = data.simOut.u_real.Data;
-    v_real = data.simOut.v_real.Data;
-    u_of = data.simOut.u_OF.Data;
-    v_of = data.simOut.v_OF.Data;
-    u_sensors = data.simOut.u_sensors.Data;
-    v_sensors = data.simOut.v_sensors.Data;
+    u_real = data(k).simOut.u_real.Data;
+    v_real = data(k).simOut.v_real.Data;
+    u_of = data(k).simOut.u_OF.Data;
+    v_of = data(k).simOut.v_OF.Data;
+    u_sensors = data(k).simOut.u_sensors.Data;
+    v_sensors = data(k).simOut.v_sensors.Data;
     z = [u_of,v_of];
 
     % Filter inputs
-    dt = data.simIn.timeStep;
-    Rsat_GPS = data.simOut.X_eci_GPS.Data;
-    Vsat_GPS = data.simOut.V_eci_GPS.Data;
-    LOS_hat_eci_sensors = data.simOut.LOS_hat_eci_sensors.Data;
-    W_sat_eci_sensors = data.simOut.Wsat_eci_sensors.Data;
-    Q_eci2body_sensors = data.simOut.Q_eci2body_sensors.Data;
-    K_optics = data.simIn.K_optics;
+    dt = data(k).simIn.timeStep;
+    Rsat_GPS = data(k).simOut.X_eci_GPS.Data;
+    Vsat_GPS = data(k).simOut.V_eci_GPS.Data;
+    LOS_hat_eci_sensors = data(k).simOut.LOS_hat_eci_sensors.Data;
+    W_sat_eci_sensors = data(k).simOut.Wsat_eci_sensors.Data;
+    Q_eci2body_sensors = data(k).simOut.Q_eci2body_sensors.Data;
+    K_optics = data(k).simIn.K_optics;
 
     % Filter tuning
     Q = 1;
