@@ -34,7 +34,7 @@ for k = options.simulations
     t = data(k).t;
 
     % Earth rotation
-    We = [0,0,data(k).simIn.Omega_E];
+    Omega_E = data(k).simIn.Omega_E;
     R_E = data(k).simIn.R_E;
 
     % Filter state
@@ -74,7 +74,7 @@ for k = options.simulations
 
     %%%%%% PERFORM ANALYSIS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     for i = 1:length(t)
-        filter_inputs = [dt,Rsat_GPS(i,:),Vsat_GPS(i,:),LOS_hat_eci_sensors(i,:),W_sat_eci_sensors(i,:),W_sat_body_sensors(i,:),K_optics];
+        filter_inputs = [dt,Rsat_GPS(i,:),Vsat_GPS(i,:),LOS_hat_eci_sensors(i,:),W_sat_eci_sensors(i,:),W_sat_body_sensors(i,:),K_optics,Omega_E,R_E];
         correct(filter,z(i,:),filter_inputs);        
         predict(filter,filter_inputs);
         Q_eci2body(i,:) = filter.State;
@@ -84,7 +84,7 @@ for k = options.simulations
     
     Rtar_eci = Rsat_GPS + rho.*LOS_hat_eci_sensors;
     Vtar_eci = target_velocity(rho,LOS_hat_eci_sensors,Rsat_GPS,Vsat_GPS,W_sat_eci_sensors);
-    Vim_eci = Vtar_eci - cross(We.*ones(size(t)),Rtar_eci);
+    Vim_eci = Vtar_eci - cross([0,0,Omega_E].*ones(size(t)),Rtar_eci);
     Vim_body = quatrotate(Q_eci2body,Vim_eci);
     Vim_body = Vim_body(:,1:2);
     uv = K_optics.*Vim_body./rho;

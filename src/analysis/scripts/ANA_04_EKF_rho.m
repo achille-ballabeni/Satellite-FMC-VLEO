@@ -1,6 +1,6 @@
 function ANA_04_EKF_rho(options)
 % ANA_04_EKF_rho This script implements the EKF using rho as state and
-% (u,v) as measurements. It can also run a tuning of the parameters and 
+% (u,v) as measurements.
 arguments (Input)
     options.simulations (1,:) = 1;
     options.data struct = [];
@@ -34,7 +34,7 @@ for k = options.simulations
     t = data(k).t;
 
     % Earth rotation
-    We = [0,0,data(k).simIn.Omega_E];
+    Omega_E = data(k).simIn.Omega_E;
 
     % Filter state
     rho_real = data(k).simOut.rho_real.Data;
@@ -73,7 +73,7 @@ for k = options.simulations
 
     %%%%%% PERFORM ANALYSIS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     for i = 1:length(t)
-        filter_inputs = [dt,Rsat_GPS(i,:),Vsat_GPS(i,:),LOS_hat_eci_sensors(i,:),W_sat_eci_sensors(i,:),Q_eci2body_sensors(i,:),K_optics];
+        filter_inputs = [dt,Rsat_GPS(i,:),Vsat_GPS(i,:),LOS_hat_eci_sensors(i,:),W_sat_eci_sensors(i,:),Q_eci2body_sensors(i,:),K_optics,Omega_E];
         correct(filter,z(i,:),filter_inputs);
         predict(filter,filter_inputs);
         rho(i) = filter.State;
@@ -81,7 +81,7 @@ for k = options.simulations
     
     Rtar_eci = Rsat_GPS + rho.*LOS_hat_eci_sensors;
     Vtar_eci = target_velocity(rho,LOS_hat_eci_sensors,Rsat_GPS,Vsat_GPS,W_sat_eci_sensors);
-    Vim_eci = Vtar_eci - cross(We.*ones(size(t)),Rtar_eci);
+    Vim_eci = Vtar_eci - cross([0,0,Omega_E].*ones(size(t)),Rtar_eci);
     Vim_body = quatrotate(Q_eci2body_sensors,Vim_eci);
     Vim_body = Vim_body(:,1:2);
     uv = K_optics.*Vim_body./rho;

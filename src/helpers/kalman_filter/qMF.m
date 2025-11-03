@@ -6,7 +6,7 @@ function [z] = qMF(Qeci2body,parameters)
 %      of the KF.
 %    scalar
 %  parameters - Parameters for the measurements function: [dt,Rsat,Vsat,LOS_hat,W_sat_eci,K_optics]
-%    17-by-1 array
+%    19-by-1 array
 %
 % Output Arguments
 %  z - Pixel shifts [u,v] at timestep k.
@@ -14,7 +14,7 @@ function [z] = qMF(Qeci2body,parameters)
 
 arguments (Input)
     Qeci2body (4,1) double
-    parameters (17,1) double
+    parameters (19,1) double
 end
 
 arguments (Output)
@@ -25,8 +25,8 @@ end
 Qeci2body = Qeci2body./norm(Qeci2body);
 
 % Earth parameters
-Omega_E = 7.2921159e-5; % TODO: add as filter parameter, get from simIn
-R_E = 6378e3;
+Omega_E = parameters(18);
+R_E = parameters(19);
 
 % Extract parameters
 Rsat = parameters(2:4);

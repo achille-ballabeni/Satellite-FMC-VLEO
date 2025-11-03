@@ -6,7 +6,7 @@ function [Qeci2bodyk] = qSTF(Qeci2body,noise,parameters)
 %      of the KF.
 %    scalar
 %  parameters - Parameters for the state transition function: [dt,Rsat_eci,Vsat_eci,LOS_hat,W_sat_eci,Qeci2body,K_optics]
-%    17-by-1 array
+%    19-by-1 array
 %
 % Output Arguments
 %  Qeci2bodyk - Attitude quaternion at timestep k+1.
@@ -15,7 +15,7 @@ function [Qeci2bodyk] = qSTF(Qeci2body,noise,parameters)
 arguments (Input)
     Qeci2body (4,1) double
     noise (4,1) double
-    parameters (17,1) double
+    parameters (19,1) double
 end
 
 arguments (Output)
