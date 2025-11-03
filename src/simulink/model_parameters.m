@@ -127,6 +127,6 @@ function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime,ID
     p.position_gps_ON = 1;
     p.velocity_gps_ON = 1;
     p.quaternion_noise_ON = 1;
-    p.angular_rate_noise_ON = 0;
+    p.angular_rate_noise_ON = 1;
 
 end

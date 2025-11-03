@@ -1,10 +1,11 @@
-function [z] = rhoMF(rho,parameters)
+function [z] = qMF(Qeci2body,parameters)
 % RHOMF Measurements function of the Line-of-Sight modulus.
 % 
 % Input Arguments
-%  rho - LOS modulus at timestep k, in this case it the state of the KF.
+%  Qeci2body - Attitude quaternion at timestep k, in this case it the state
+%      of the KF.
 %    scalar
-%  parameters - Parameters for the measurements function: [dt,Rsat,Vsat,LOS_hat,W_sat_eci,Qeci2body,K_optics,Omega_E]
+%  parameters - Parameters for the measurements function: [dt,Rsat,Vsat,LOS_hat,W_sat_eci,K_optics]
 %    19-by-1 array
 %
 % Output Arguments
@@ -12,7 +13,7 @@ function [z] = rhoMF(rho,parameters)
 %    2-by-1 array
 
 arguments (Input)
-    rho (1,1) double
+    Qeci2body (4,1) double
     parameters (19,1) double
 end
 
@@ -20,16 +21,22 @@ arguments (Output)
     z (2,1) double
 end
 
+% Normalize state
+Qeci2body = Qeci2body./norm(Qeci2body);
+
+% Earth parameters
+Omega_E = parameters(18);
+R_E = parameters(19);
+
 % Extract parameters
 Rsat = parameters(2:4);
 Vsat = parameters(5:7);
 LOS_hat = parameters(8:10);
 Wsat = parameters(11:13);
-Qeci2body = parameters(14:17);
-K_optics = parameters(18);
-Omega_E = parameters(19);
+K_optics = parameters(17);
 
 % Target position
+rho = sphere_intersection(R_E,Rsat',LOS_hat');
 Rtar = Rsat + LOS_hat.*rho;
 
 % Measurement model
