@@ -1,4 +1,4 @@
-clear
+clear, clc
 
 %% Orbital parameters and inital conditions
 a = 6378e3 + 250e3; % [m]
@@ -14,7 +14,7 @@ startTime = datetime(2025,1,1,12,0,0);
 timestep = 0.1;
 duration = 10;
 cubesat = satellite_simulation(orbital_parameters,initial_attitude,initial_angular_velocity,startTime);
-cubesat.set_model_parameters(duration=duration,timestep=timestep);
+cubesat.set_model_parameters(duration=duration,timestep=timestep,estimation_filter="off");
 cubesat.simulate();
 batch_path = cubesat.export_results("destination","..\results");
 
