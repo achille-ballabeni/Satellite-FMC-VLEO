@@ -1,5 +1,5 @@
 function [data] = load_data()
-%LOAD_DATA Load simulation results for standard 
+%LOAD_DATA Load simulation results for standard analysis script execution.
 
 arguments (Output)
     data
