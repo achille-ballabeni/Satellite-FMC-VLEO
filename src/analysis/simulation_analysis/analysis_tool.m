@@ -90,7 +90,7 @@ classdef analysis_tool < handle
             
             % Find all .m files in batch folder
             basePath = fileparts(mfilename("fullpath"));
-            scriptFiles = dir(fullfile(basePath,"simulation_analysis","scripts","ANA_*.m"));
+            scriptFiles = dir(fullfile(basePath,"scripts","ANA_*.m"));
             
             if isempty(scriptFiles)
                 warning('No analysis scripts (.m files) found in: %s', obj.batchPath);
@@ -142,7 +142,7 @@ classdef analysis_tool < handle
             end
             
             basePath = fileparts(mfilename("fullpath"));
-            scriptFile = dir(fullfile(basePath,"simulation_analysis","scripts",strcat("ANA_",scriptNumber,"_*.m")));
+            scriptFile = dir(fullfile(basePath,"scripts",strcat("ANA_",scriptNumber,"_*.m")));
             [~, scriptName] = fileparts(scriptFile.name);
             
             fprintf('\n--- Running: %s ---\n', scriptName);
