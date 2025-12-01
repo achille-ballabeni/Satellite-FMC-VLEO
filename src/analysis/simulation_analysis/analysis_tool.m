@@ -90,7 +90,7 @@ classdef analysis_tool < handle
             
             % Find all .m files in batch folder
             basePath = fileparts(mfilename("fullpath"));
-            scriptFiles = dir(fullfile(basePath,"scripts",'ANA_*.m'));
+            scriptFiles = dir(fullfile(basePath,"scripts","ANA_*.m"));
             
             if isempty(scriptFiles)
                 warning('No analysis scripts (.m files) found in: %s', obj.batchPath);
