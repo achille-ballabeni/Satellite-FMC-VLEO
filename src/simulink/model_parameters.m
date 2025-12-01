@@ -105,9 +105,9 @@ function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime,ID
     p.GPSVAccuracy   = 10; % [m]
     p.GPSVelAccuracy = 0.1; % [m/s]
     
-    %% Camera parameters
-    p.FL       = 50e-3;      % Focal length [m]
-    p.L_pixel  = 4.8e-6;     % Pixel size [m]
+    %% Camera parameters (TriScape100)
+    p.FL       = 580e-3;     % Focal length [m]
+    p.L_pixel  = 5.5e-6;     % Pixel size [m]
     p.fps      = 1/p.timeStep; % frame rate [Hz]
     p.K_optics = p.FL/(p.L_pixel*p.fps);
     
