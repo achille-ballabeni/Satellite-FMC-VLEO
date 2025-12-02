@@ -31,6 +31,7 @@ classdef image_processing < handle
 
             arguments (Input)
                 options.db_path string = "default"
+                options.sensor string = "TriScape100"
             end
 
             % Select database folder
@@ -50,7 +51,7 @@ classdef image_processing < handle
             end
 
             % Initialize parameters
-            obj.set_sensor();
+            obj.set_sensor('sensor',options.sensor);
             obj.set_scenario();
             obj.Vshift();
             obj.saturation();
