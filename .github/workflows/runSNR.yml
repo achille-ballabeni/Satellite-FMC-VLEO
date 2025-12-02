@@ -2,6 +2,12 @@ name: SNR-Analysis
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      exposure_times:
+        description: 'Exposure times for SNR analysis'
+        required: true
+        default: '[300:50:700]*10^-6'
+        type: string
 
 jobs:
   run-SNR-analysis:
@@ -27,7 +33,7 @@ jobs:
             proj = openProject(pwd);
             im = image_processing();
             im.load_images();
-            exposure = [600]*10^-6;
+            exposure = str2num("${{ github.event.inputs.exposure_times || '600*10^-6' }}");
             im.runSNR("blur",true,"noise",true,"exposures",exposure);
             im.runSNR("blur",false,"noise",true,"exposures",exposure);
       
