@@ -229,14 +229,14 @@ classdef image_processing < handle
                         u_est = zeros(obj.nImages,1);
                         v_est = zeros(obj.nImages,1);
                         time = 0;
-                        % Compute blur shift
-                        blur_shift = Vpx.*exposure_time;
                         for k = 1:obj.nImages
                             % Get image from preloaded cell array
                             image = obj.images{k};
 
                             % Add motion blur
                             if blur
+                                % Compute blur shift
+                                blur_shift = Vpx.*exposure_time;
                                 image = motion_blur(image,blur_shift);
                             end
 
