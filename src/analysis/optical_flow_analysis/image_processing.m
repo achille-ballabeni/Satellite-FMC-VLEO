@@ -53,8 +53,6 @@ classdef image_processing < handle
             % Initialize parameters
             obj.set_sensor('sensor',options.sensor);
             obj.set_scenario();
-            obj.Vshift();
-            obj.saturation();
         end
 
         function load_images(obj)
@@ -86,6 +84,12 @@ classdef image_processing < handle
             end
 
             obj.sensor = sensors(options.sensor);
+
+            % Update saturation and blur
+            if ~isempty(obj.scenario)
+                obj.saturation();
+                obj.Vshift();
+            end
         end
 
         function set_scenario(obj,options)
@@ -103,11 +107,24 @@ classdef image_processing < handle
             arguments (Input)
                 obj
                 options.altitude (1,1) double = 250000
-                options.photon_flux (1,1) double = 1.8e7
+                options.photon_flux (1,1) double = 0
+            end
+            
+            % Set altitude
+            obj.scenario.altitude = options.altitude;
+            
+            % Set flux
+            if options.photon_flux == 0
+                obj.scenario.photon_flux = min([obj.sensor.photon_flux_RED,obj.sensor.photon_flux_RED,obj.sensor.photon_flux_RED]);
+            else
+                obj.scenario.photon_flux = options.photon_flux;
             end
 
-            obj.scenario.altitude = options.altitude;
-            obj.scenario.photon_flux = options.photon_flux;
+            % Update saturation and blur
+            if ~isempty(obj.sensor)
+                obj.saturation()
+                obj.Vshift()
+            end
         end
 
         function run_OF_analysis(obj,options)
