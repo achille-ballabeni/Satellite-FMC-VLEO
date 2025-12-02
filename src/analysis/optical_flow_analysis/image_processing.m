@@ -50,10 +50,10 @@ classdef image_processing < handle
             end
 
             % Initialize parameters
-            obj.set_sensor()
-            obj.set_scenario()
-            obj.Vshift()
-            obj.saturation()
+            obj.set_sensor();
+            obj.set_scenario();
+            obj.Vshift();
+            obj.saturation();
         end
 
         function load_images(obj)
@@ -443,7 +443,7 @@ classdef image_processing < handle
             inc_SSO = acos(-2/3*dOmega_dt/J2*(sma/Re)^2*sqrt(sma^3/mi)); %TODO: where should I move this calculation?
             Vearth = We*Re;
             % Ground sampling distance
-            GSD = obj.sensor.px*(obj.scenario.altitude)/obj.sensor.f;
+            GSD = gsd(obj.sensor.px,obj.sensor.f,obj.scenario.altitude);
             % Orbital velocity
             Vorb = sqrt(mi/(Re+obj.scenario.altitude));
             % Pixel velocity
