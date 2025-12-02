@@ -122,8 +122,8 @@ classdef image_processing < handle
 
             % Update saturation and blur
             if ~isempty(obj.sensor)
-                obj.saturation()
-                obj.Vshift()
+                obj.saturation();
+                obj.Vshift();
             end
         end
 

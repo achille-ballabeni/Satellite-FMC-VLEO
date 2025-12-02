@@ -5,9 +5,12 @@ on:
     inputs:
       exposure_times:
         description: 'Run interval of times'
-        required: false
+        required: true
         default: 'true'
-        type: string
+        type: choice
+        options:
+        - 'true'
+        - 'false'
       sensor:
         description: 'Choose sensor for the simulation'
         required: true
@@ -38,14 +41,11 @@ jobs:
         with:
           command: |
             proj = openProject(pwd);
-            sensor = "${{ github.event.inputs.sensor }}";
-            if isempty(sensor)
-                sensor = "TriScape100";
-            end
+            sensor = "${{ github.event.inputs.sensor || 'TriScape100' }}";
             im = image_processing("sensor", sensor);
             im.load_images();
-            exposure_input = "${{ github.event.inputs.exposure_times }}";
-            if isempty(exposure_input) || strcmp(exposure_input, 'true')
+            exposure_input = "${{ github.event.inputs.exposure_times || 'false' }}";
+            if strcmp(exposure_input, 'true')
                 exposure = linspace(im.Tblur, im.Tsaturation, 10);
             else
                 exposure = 0.9*im.Tsaturation;
