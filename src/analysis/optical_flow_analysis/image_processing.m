@@ -115,7 +115,7 @@ classdef image_processing < handle
             
             % Set flux
             if options.photon_flux == 0
-                obj.scenario.photon_flux = min([obj.sensor.photon_flux_RED,obj.sensor.photon_flux_RED,obj.sensor.photon_flux_RED]);
+                obj.scenario.photon_flux = max([obj.sensor.photon_flux_RED,obj.sensor.photon_flux_GREEN,obj.sensor.photon_flux_BLUE]);
             else
                 obj.scenario.photon_flux = options.photon_flux;
             end
