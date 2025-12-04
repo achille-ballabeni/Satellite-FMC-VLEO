@@ -38,7 +38,7 @@ classdef image_processing < handle
             if options.db_path == "default"
                 path = fullfile(fileparts(mfilename("fullpath")),'..','..','media','test_db','*.jpg');
             elseif isfolder(options.db_path)
-                path = options.db_path;
+                path = fullfile(options.db_path,'*.jpg');
             else
                 error("%s is not a folder", options.db_path)
             end
@@ -87,6 +87,7 @@ classdef image_processing < handle
 
             % Update saturation and blur
             if ~isempty(obj.scenario)
+                obj.set_scenario("altitude",obj.scenario.altitude)
                 obj.saturation();
                 obj.Vshift();
             end
