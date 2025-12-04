@@ -1,7 +1,5 @@
 function [noisyImageDN, imageDN] = shot_noise(image, exposureTime, photonFlux, QE, ...
                               fullWell, gain)
-
-
 arguments (Input)
     image (:,:,:) {mustBeA(image, ["uint8", "uint16"])}
     exposureTime (1,1) double {mustBePositive}
@@ -12,8 +10,8 @@ arguments (Input)
 end
 
 arguments (Output)
-    noisyImageDN (:,:,:) {mustBeA(noisyImageDN, ["uint8", "uint16"])}
-    imageDN (:,:,:) {mustBeA(imageDN, ["uint8", "uint16"])}
+    noisyImageDN (:,:,:) double
+    imageDN (:,:,:) double
 end
 
 % --- STEP 1: Normalize image between 0 and 1 ---
@@ -38,10 +36,5 @@ noisyElectrons(noisyElectrons>fullWell) = fullWell;
 % --- STEP 7: Convert electrons to DN ---
 imageDN = expectedElectrons .* gain;
 noisyImageDN = noisyElectrons .* gain;
-
-% --- STEP 8: Quantize ---
-quantize = str2func(class(image));
-imageDN = quantize(imageDN);
-noisyImageDN = quantize(noisyImageDN);
 
 end

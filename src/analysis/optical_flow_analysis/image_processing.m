@@ -286,6 +286,9 @@ classdef image_processing < handle
                                     shifted_img(padded_mask) = 0;
                                 end
                             end
+                            % Quantize
+                            original_img = uint8(original_img);
+                            shifted_img = uint(shifted_img);
 
                             % Time optical flow
                             tic
@@ -396,16 +399,12 @@ classdef image_processing < handle
                         % computed inside shot noise. Maybe make a class to
                         % contain all methods related to the image
                         % processing.
-                        ref = uint8(obj.scenario.photon_flux*time*double(ref)./255*obj.sensor.gain);
+                        ref = obj.scenario.photon_flux*time*double(ref)./255*obj.sensor.gain;
                     end
 
-                    % Greyscale conversion
-                    ref = im2gray(ref);
-                    image = im2gray(image);
-
                     % Compute SNR
-                    denom = sqrt(mean((double(image)-double(ref)).^2,"all"));
-                    SNR = mean(double(ref)./denom,"all");
+                    denom = sqrt(mean((double(image)-double(ref)).^2,[1,2]));
+                    SNR = mean(mean(double(ref),[1,2])./denom);
                     snr(k) = SNR;
 
                     % Display progress bar
