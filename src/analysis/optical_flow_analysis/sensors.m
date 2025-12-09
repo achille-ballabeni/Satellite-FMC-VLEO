@@ -41,20 +41,40 @@ switch lower(name)
        cfg.D = 95*10^-3;
        cfg.px = 5.5*10^-6;
 
+    case 'simulator'
+        cfg.name = "simulator";
+        cfg.full_well = 33624;
+        cfg.gain = 255/cfg.full_well;
+        cfg.f = 50*10^-3;
+        cfg.D = 4.45*10^-3;
+        cfg.px = 5.86*10^-6;
+
     otherwise
         error('Unknown sensor: %s', name);
 end
 
 % From 6SV with settings:
-% CMV 12000 sensor | BetaAngle=22.5deg | 0.3 lambertian
-toa_photon_flux_RED = 3.05868*10^20;
-dlambda_RED = 0.1014099;
-
-toa_photon_flux_GREEN = 3.07001*10^20;
-dlambda_GREEN = 0.088836;
-
-toa_photon_flux_BLUE = 2.90814*10^20;
-dlambda_BLUE = 0.0788317;
+if lower(name) ~= "simulator"
+    % CMV 12000 sensor | BetaAngle=22.5deg | latitude=45deg | 0.3 lambertian
+    toa_photon_flux_RED = 2.03861*10^20;
+    dlambda_RED = 0.1014099;
+    
+    toa_photon_flux_GREEN = 2.03453*10^20;
+    dlambda_GREEN = 0.088836;
+    
+    toa_photon_flux_BLUE = 1.95556*10^20;
+    dlambda_BLUE = 0.0788317;
+else
+    % IMX249 sensor | BetaAngle=22.5deg | latitude=45deg | 0.3 lambertian
+    toa_photon_flux_RED = 2.13882*10^20;
+    dlambda_RED = 0.0964414;
+    
+    toa_photon_flux_GREEN = 2.13293*10^20;
+    dlambda_GREEN = 0.1142461;
+    
+    toa_photon_flux_BLUE = 2.04748*10^20;
+    dlambda_BLUE = 0.0820599;
+end
 
 k = pi/4*(cfg.D/cfg.f)^2*cfg.px^2;
 

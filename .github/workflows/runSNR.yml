@@ -21,6 +21,7 @@ on:
         - 2m@250
         - 1.5m@250
         - 1m@250
+        - simulator
 jobs:
   run-SNR-analysis:
     name: Setup MATLAB and run SNR analysis
