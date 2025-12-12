@@ -204,7 +204,8 @@ classdef image_processing < handle
                 n, 1);
 
             % Unpack true shifts
-            [Vpx, Tb] = obj.Vshift();
+            Vpx = obj.Vpixel;
+            Tb = obj.Tblur;
             uv = Vpx*options.dt;
             u = uv(1);
             v = uv(2);
@@ -217,8 +218,8 @@ classdef image_processing < handle
                 obj.OFout(i).v_real = v;
                 obj.OFout(i).dt = options.dt;
                 obj.OFout(i).Tblur = Tb;
-                obj.OFout(i).Tsaturation = obj.saturation();
-                obj.OFout(i).scenario = obj.scenario();
+                obj.OFout(i).Tsaturation = obj.Tsaturation;
+                obj.OFout(i).scenario = obj.scenario;
                 obj.OFout(i).sensor = obj.sensor;
 
                 % Set index per each combination in resolution
@@ -289,7 +290,7 @@ classdef image_processing < handle
                             end
                             % Quantize
                             original_img = uint8(original_img);
-                            shifted_img = uint(shifted_img);
+                            shifted_img = uint8(shifted_img);
 
                             % Time optical flow
                             tic
@@ -380,8 +381,7 @@ classdef image_processing < handle
                 time = options.exposures(i);
 
                 % Compute pixel shift and blur time
-                Vpx = obj.Vshift();
-
+                Vpx = obj.Vpixel;
 
                 % Begin main cycle
                 fprintf("Exposure time: %f ", time)
@@ -436,8 +436,8 @@ classdef image_processing < handle
         end
 
         function [Vpx,Tb] = Vshift(obj)
-            % VSHIFT Computes the pixel velocity for given sensor and
-            % scenario.
+            % VSHIFT Computes the pixel velocity and blur time for given
+            % sensor and scenario.
             %
             % Output Arguments:
             %   Vpixel - Pixel velocity in camera frame.
