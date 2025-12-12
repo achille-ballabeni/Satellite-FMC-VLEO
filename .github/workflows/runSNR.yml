@@ -2,7 +2,26 @@ name: SNR-Analysis
 on:
   pull_request:
   workflow_dispatch:
-
+    inputs:
+      exposure_times:
+        description: 'Run interval of times'
+        required: true
+        default: 'true'
+        type: choice
+        options:
+        - 'true'
+        - 'false'
+      sensor:
+        description: 'Choose sensor for the simulation'
+        required: true
+        default: 'TriScape100'
+        type: choice
+        options:
+        - 'TriScape100'
+        - '2m@250'
+        - '1.5m@250'
+        - '1m@250'
+        - 'simulator'
 jobs:
   run-SNR-analysis:
     name: Setup MATLAB and run SNR analysis
@@ -10,7 +29,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v2
         with:
@@ -19,23 +37,25 @@ jobs:
           products: >
             Signal_Processing_Toolbox
             Image_Processing_Toolbox
-      
       - name: Run SNR analysis
         uses: matlab-actions/run-command@v2
         with:
           command: |
             proj = openProject(pwd);
-            im = image_processing();
+            sensor = "${{ github.event.inputs.sensor || 'TriScape100' }}";
+            im = image_processing("sensor", sensor);
             im.load_images();
-            exposure = [600]*10^-6;
-            im.runSNR("blur",true,"noise",true,"exposures",exposure);
-            im.runSNR("blur",false,"noise",true,"exposures",exposure);
-      
+            exposure_input = "${{ github.event.inputs.exposure_times || 'false' }}";
+            if strcmp(exposure_input, 'true')
+                exposure = linspace(im.Tblur, im.Tsaturation, 10);
+            else
+                exposure = 0.9*im.Tsaturation;
+            end
+            im.runSNR("blur", true, "noise", true, "exposures", exposure);
+            im.runSNR("blur", false, "noise", true, "exposures", exposure);
       - name: Upload SNR results
         uses: actions/upload-artifact@v4
         with:
           name: snr-results
-          path: |
-            IM_results/
+          path: IM_results/
           if-no-files-found: warn
-              

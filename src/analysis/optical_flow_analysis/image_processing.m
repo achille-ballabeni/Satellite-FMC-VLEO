@@ -31,13 +31,14 @@ classdef image_processing < handle
 
             arguments (Input)
                 options.db_path string = "default"
+                options.sensor string = "TriScape100"
             end
 
             % Select database folder
             if options.db_path == "default"
                 path = fullfile(fileparts(mfilename("fullpath")),'..','..','media','test_db','*.jpg');
             elseif isfolder(options.db_path)
-                path = options.db_path;
+                path = fullfile(options.db_path,'*.jpg');
             else
                 error("%s is not a folder", options.db_path)
             end
@@ -50,10 +51,8 @@ classdef image_processing < handle
             end
 
             % Initialize parameters
-            obj.set_sensor()
-            obj.set_scenario()
-            obj.Vshift()
-            obj.saturation()
+            obj.set_sensor('sensor',options.sensor);
+            obj.set_scenario();
         end
 
         function load_images(obj)
@@ -85,6 +84,13 @@ classdef image_processing < handle
             end
 
             obj.sensor = sensors(options.sensor);
+
+            % Update saturation and blur
+            if ~isempty(obj.scenario)
+                obj.set_scenario("altitude",obj.scenario.altitude)
+                obj.saturation();
+                obj.Vshift();
+            end
         end
 
         function set_scenario(obj,options)
@@ -102,11 +108,24 @@ classdef image_processing < handle
             arguments (Input)
                 obj
                 options.altitude (1,1) double = 250000
-                options.photon_flux (1,1) double = 1.8e7
+                options.photon_flux (1,1) double = 0
+            end
+            
+            % Set altitude
+            obj.scenario.altitude = options.altitude;
+            
+            % Set flux
+            if options.photon_flux == 0
+                obj.scenario.photon_flux = max([obj.sensor.photon_flux_RED,obj.sensor.photon_flux_GREEN,obj.sensor.photon_flux_BLUE]);
+            else
+                obj.scenario.photon_flux = options.photon_flux;
             end
 
-            obj.scenario.altitude = options.altitude;
-            obj.scenario.photon_flux = options.photon_flux;
+            % Update saturation and blur
+            if ~isempty(obj.sensor)
+                obj.saturation();
+                obj.Vshift();
+            end
         end
 
         function run_OF_analysis(obj,options)
@@ -185,7 +204,8 @@ classdef image_processing < handle
                 n, 1);
 
             % Unpack true shifts
-            [Vpx, Tb] = obj.Vshift();
+            Vpx = obj.Vpixel;
+            Tb = obj.Tblur;
             uv = Vpx*options.dt;
             u = uv(1);
             v = uv(2);
@@ -198,8 +218,8 @@ classdef image_processing < handle
                 obj.OFout(i).v_real = v;
                 obj.OFout(i).dt = options.dt;
                 obj.OFout(i).Tblur = Tb;
-                obj.OFout(i).Tsaturation = obj.saturation();
-                obj.OFout(i).scenario = obj.scenario();
+                obj.OFout(i).Tsaturation = obj.Tsaturation;
+                obj.OFout(i).scenario = obj.scenario;
                 obj.OFout(i).sensor = obj.sensor;
 
                 % Set index per each combination in resolution
@@ -229,14 +249,14 @@ classdef image_processing < handle
                         u_est = zeros(obj.nImages,1);
                         v_est = zeros(obj.nImages,1);
                         time = 0;
-                        % Compute blur shift
-                        blur_shift = Vpx.*exposure_time;
                         for k = 1:obj.nImages
                             % Get image from preloaded cell array
                             image = obj.images{k};
 
                             % Add motion blur
                             if blur
+                                % Compute blur shift
+                                blur_shift = Vpx.*exposure_time;
                                 image = motion_blur(image,blur_shift);
                             end
 
@@ -268,6 +288,9 @@ classdef image_processing < handle
                                     shifted_img(padded_mask) = 0;
                                 end
                             end
+                            % Quantize
+                            original_img = uint8(original_img);
+                            shifted_img = uint8(shifted_img);
 
                             % Time optical flow
                             tic
@@ -338,25 +361,27 @@ classdef image_processing < handle
             n = length(options.exposures);
 
             % Initialize output variables
-            obj.OFout = repmat( ...
+            obj.SNRout = struct('sensor', obj.sensor, ...
+                'scenario', obj.scenario, ...
+                'blur', options.blur, ...
+                'noise', options.noise, ...
+                'Tblur', obj.Tblur, ...
+                'Tsaturation', obj.Tsaturation, ...
+                'data', struct);
+            data = repmat( ...
                 struct( ...
                 'exposure', [], ...
-                'blur', [], ...
-                'noise', [], ...
-                'scenario', struct, ...
-                'sensor', struct, ...
-                'Tblur', [], ...
-                'Tsaturation', [], ...
-                'mean_SNR', [], ...
-                'SNR', []), ...
+                'mean_SNR',[], ...
+                'SNR',[]), ...
                 n, 1);
+            
             snr = zeros(1,obj.nImages);
 
             for i = 1:n
                 time = options.exposures(i);
 
                 % Compute pixel shift and blur time
-                [Vpx, Tb] = obj.Vshift();
+                Vpx = obj.Vpixel;
 
                 % Begin main cycle
                 fprintf("Exposure time: %f ", time)
@@ -378,16 +403,12 @@ classdef image_processing < handle
                         % computed inside shot noise. Maybe make a class to
                         % contain all methods related to the image
                         % processing.
-                        ref = uint8(obj.scenario.photon_flux*time*double(ref)./255*obj.sensor.gain);
+                        ref = obj.scenario.photon_flux*time*double(ref)./255*obj.sensor.gain;
                     end
 
-                    % Greyscale conversion
-                    ref = im2gray(ref);
-                    image = im2gray(image);
-
                     % Compute SNR
-                    denom = sqrt(mean((double(image)-double(ref)).^2,"all"));
-                    SNR = mean(double(ref)./denom,"all");
+                    denom = sqrt(mean((double(image)-double(ref)).^2,[1,2]));
+                    SNR = mean(mean(double(ref),[1,2])./denom);
                     snr(k) = SNR;
 
                     % Display progress bar
@@ -396,26 +417,27 @@ classdef image_processing < handle
                 mean_SNR = mean(snr,"all");
 
                 % Save data
-                obj.SNRout(i).exposure = time;
-                obj.SNRout(i).blur = options.blur;
-                obj.SNRout(i).noise = options.noise;
-                obj.SNRout(i).scenario = obj.scenario;
-                obj.SNRout(i).sensor = obj.sensor;
-                obj.SNRout(i).Tblur = Tb;
-                obj.SNRout(i).Tsaturation = obj.saturation;
-                obj.SNRout(i).mean_SNR = mean_SNR;
-                obj.SNRout(i).SNR = snr;
+                data(i).exposure = time;
+                data(i).mean_SNR = mean_SNR;
+                data(i).SNR = snr;
             end
 
+            % Prepare results
+            obj.SNRout.data = data;
+
             % Export results
-            name = "SNR_results";
+            if options.blur
+                name = obj.sensor.name + "_blur_" + "SNR_results";
+            else
+                name = obj.sensor.name + "_SNR_results";
+            end
             out = obj.SNRout;
             obj.export_results(name,out)
         end
 
         function [Vpx,Tb] = Vshift(obj)
-            % VSHIFT Computes the pixel velocity for given sensor and
-            % scenario.
+            % VSHIFT Computes the pixel velocity and blur time for given
+            % sensor and scenario.
             %
             % Output Arguments:
             %   Vpixel - Pixel velocity in camera frame.
@@ -443,7 +465,7 @@ classdef image_processing < handle
             inc_SSO = acos(-2/3*dOmega_dt/J2*(sma/Re)^2*sqrt(sma^3/mi)); %TODO: where should I move this calculation?
             Vearth = We*Re;
             % Ground sampling distance
-            GSD = obj.sensor.px*(obj.scenario.altitude)/obj.sensor.f;
+            GSD = gsd(obj.sensor.px,obj.sensor.f,obj.scenario.altitude);
             % Orbital velocity
             Vorb = sqrt(mi/(Re+obj.scenario.altitude));
             % Pixel velocity
