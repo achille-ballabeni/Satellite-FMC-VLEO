@@ -426,7 +426,11 @@ classdef image_processing < handle
             end
 
             % Export results
-            name = "SNR_results";
+            if options.blur
+                name = obj.sensor.name + "_blur_" + "SNR_results";
+            else
+                name = obj.sensor.name + "_SNR_results";
+            end
             out = obj.SNRout;
             obj.export_results(name,out)
         end
