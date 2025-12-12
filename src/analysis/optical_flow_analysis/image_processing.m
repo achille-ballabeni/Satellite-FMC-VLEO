@@ -379,6 +379,10 @@ classdef image_processing < handle
             for i = 1:n
                 time = options.exposures(i);
 
+                % Compute pixel shift and blur time
+                Vpx = obj.Vshift();
+
+
                 % Begin main cycle
                 fprintf("Exposure time: %f ", time)
                 for k = 1:obj.nImages
