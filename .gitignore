@@ -6,3 +6,5 @@
 *.json
 *.fig
 slprj
+env
+__pycache__
