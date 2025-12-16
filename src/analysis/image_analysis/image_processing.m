@@ -6,9 +6,11 @@ classdef image_processing < handle
         nImages % Number of images
         sensor % Imaging sensor selection
         scenario % Orbital scenario
+        optics % Imaging payload optics
         Vpixel % Pixel velocity
         Tblur % Maximum exposure time before blur
         Tsaturation % Maximum exposure time before saturation
+        base_dir % Root directory of project
 
         OFout % Output results for optical flow analysis
         SNRout % Output results for SNR analysis
@@ -31,12 +33,19 @@ classdef image_processing < handle
 
             arguments (Input)
                 options.db_path string = "default"
-                options.sensor string = "TriScape100"
+                options.optics string = "TriScape100"
+                options.sensor string = "CMV12000"
             end
+
+            % Project root folder
+            obj.base_dir = matlab.project.currentProject().RootFolder;
+
+            % Initialize python
+            obj.py_init()
 
             % Select database folder
             if options.db_path == "default"
-                path = fullfile(fileparts(mfilename("fullpath")),'..','..','media','test_db','*.jpg');
+                path = fullfile(obj.base_dir,'src','media','test_db','*.jpg');
             elseif isfolder(options.db_path)
                 path = fullfile(options.db_path,'*.jpg');
             else
@@ -51,6 +60,7 @@ classdef image_processing < handle
             end
 
             % Initialize parameters
+            obj.set_optics('optics',options.optics);
             obj.set_sensor('sensor',options.sensor);
             obj.set_scenario();
         end
@@ -69,6 +79,31 @@ classdef image_processing < handle
             end
         end
 
+        function set_optics(obj,options)
+            % SET_OPTICS Initializes the payload optics model used by the
+            % object.
+            %
+            % Input Arguments
+            %   obj - Object whose optics configuration will be updated.
+            %     object
+            %   options.optics - Name of the payload optics to use.
+            %     string, default "triscape100"
+
+            arguments (Input)
+                obj
+                options.optics string = "triscape100"
+            end
+
+            obj.optics = payload_optics(options.optics);
+
+            % Update saturation and blur when optics is changed
+            if ~isempty(obj.scenario) && ~isempty(obj.sensor)
+                obj.electron_flux();
+                obj.saturation();
+                obj.Vshift();
+            end
+        end
+
         function set_sensor(obj,options)
             % SET_SENSOR Initializes the sensor model used by the object.
             %
@@ -76,18 +111,18 @@ classdef image_processing < handle
             %   obj - Object whose sensor configuration will be updated.
             %     object
             %   options.sensor - Name of the sensor model to load.
-            %     string, default "triscape100"
+            %     string, default "CMV12000"
 
             arguments (Input)
                 obj
-                options.sensor string = "triscape100"
+                options.sensor string = "CMV12000"
             end
 
             obj.sensor = sensors(options.sensor);
 
-            % Update saturation and blur
-            if ~isempty(obj.scenario)
-                obj.set_scenario("altitude",obj.scenario.altitude)
+            % Update saturation and blur when sensor is changed
+            if ~isempty(obj.scenario) && ~isempty(obj.optics)
+                obj.electron_flux();
                 obj.saturation();
                 obj.Vshift();
             end
@@ -110,22 +145,44 @@ classdef image_processing < handle
                 options.altitude (1,1) double = 250000
                 options.photon_flux (1,1) double = 0
             end
-            
+
             % Set altitude
             obj.scenario.altitude = options.altitude;
-            
-            % Set flux
-            if options.photon_flux == 0
-                obj.scenario.photon_flux = max([obj.sensor.photon_flux_RED,obj.sensor.photon_flux_GREEN,obj.sensor.photon_flux_BLUE]);
-            else
-                obj.scenario.photon_flux = options.photon_flux;
-            end
 
-            % Update saturation and blur
-            if ~isempty(obj.sensor)
+            % Update saturation and blur when scenario is changed
+            if ~isempty(obj.sensor) && ~isempty(obj.optics)
+                obj.electron_flux();
                 obj.saturation();
                 obj.Vshift();
             end
+        end
+
+        function electron_flux(obj)
+            % ELECTRON_FLUX Runs 6SV simulation based on sensor, scenario and
+            % optics. Saves results in obj.scenario.electron_rate.
+
+            % sixsV1.1 path
+            radiative_transfer_path = fullfile(obj.base_dir,"src","analysis","radiative_transfer");
+            radiative_transfer_py = fullfile(radiative_transfer_path,"transfer.py");
+            sixs_path = fullfile(radiative_transfer_path,"6SV1.1","sixsV1.1");
+
+            % Run radiative transfer model to obtain electron flux
+            file_with_arguments = radiative_transfer_py ...
+                + " --sixs_path " + sixs_path ...
+                + " --sensor " + obj.sensor.name;
+            fprintf("Running 6SV simulation...\n")
+            outvar = pyrunfile(file_with_arguments,"matlab_output");
+
+            % Extract results and compute maximum electron rate
+            dict_list = cell(outvar);
+            colors = cellfun(@(d) string(d{"color"}), dict_list);
+            electron_flux = cellfun(@(d) double(d{"electron_flux"}), dict_list);
+            deltaL = cellfun(@(d) double(d{"integrated_filter_function"}), dict_list);
+            electron_rate = electron_flux .* deltaL * pi ./ 4 .* (obj.optics.D / obj.optics.f) .^ 2 .* obj.sensor.px^2;
+            [m,i] = max(electron_rate);
+            obj.scenario.electron_rate = m;
+            obj.scenario.max_rate_band = colors(i);
+            obj.scenario.integrated_filter_function = deltaL(i);
         end
 
         function run_OF_analysis(obj,options)
@@ -269,8 +326,8 @@ classdef image_processing < handle
 
                                 % Add shot noise to image
                                 if noise
-                                    [original_img, ~] = shot_noise(original_img,exposure_time,obj.scenario.photon_flux,1,obj.sensor.full_well,obj.sensor.gain);
-                                    [shifted_img, ~] = shot_noise(shifted_img,exposure_time,obj.scenario.photon_flux,1,obj.sensor.full_well,obj.sensor.gain);
+                                    [original_img, ~] = shot_noise(original_img,exposure_time,obj.scenario.electron_rate,1,obj.sensor.full_well,obj.sensor.gain);
+                                    [shifted_img, ~] = shot_noise(shifted_img,exposure_time,obj.scenario.electron_rate,1,obj.sensor.full_well,obj.sensor.gain);
                                 end
 
                             else
@@ -282,8 +339,8 @@ classdef image_processing < handle
 
                                 % Add shot noise to image
                                 if noise
-                                    [original_img, ~] = shot_noise(original_img,exposure_time,obj.scenario.photon_flux,1,obj.sensor.full_well,obj.sensor.gain);
-                                    [shifted_img, ~] = shot_noise(shifted_img,exposure_time,obj.scenario.photon_flux,1,obj.sensor.full_well,obj.sensor.gain);
+                                    [original_img, ~] = shot_noise(original_img,exposure_time,obj.scenario.electron_rate,1,obj.sensor.full_well,obj.sensor.gain);
+                                    [shifted_img, ~] = shot_noise(shifted_img,exposure_time,obj.scenario.electron_rate,1,obj.sensor.full_well,obj.sensor.gain);
                                     % Remove noise from padded values
                                     shifted_img(padded_mask) = 0;
                                 end
@@ -374,7 +431,7 @@ classdef image_processing < handle
                 'mean_SNR',[], ...
                 'SNR',[]), ...
                 n, 1);
-            
+
             snr = zeros(1,obj.nImages);
 
             for i = 1:n
@@ -398,12 +455,12 @@ classdef image_processing < handle
 
                     % Add noise
                     if options.noise
-                        [image, ~] = shot_noise(image,time,obj.scenario.photon_flux,1,obj.sensor.full_well,obj.sensor.gain);
+                        [image, ~] = shot_noise(image,time,obj.scenario.electron_rate,1,obj.sensor.full_well,obj.sensor.gain);
                         % TODO: improve computations. This is already
                         % computed inside shot noise. Maybe make a class to
                         % contain all methods related to the image
                         % processing.
-                        ref = obj.scenario.photon_flux*time*double(ref)./255*obj.sensor.gain;
+                        ref = obj.scenario.electron_rate*time*double(ref)./255*obj.sensor.gain;
                     end
 
                     % Compute SNR
@@ -465,7 +522,7 @@ classdef image_processing < handle
             inc_SSO = acos(-2/3*dOmega_dt/J2*(sma/Re)^2*sqrt(sma^3/mi)); %TODO: where should I move this calculation?
             Vearth = We*Re;
             % Ground sampling distance
-            GSD = gsd(obj.sensor.px,obj.sensor.f,obj.scenario.altitude);
+            GSD = gsd(obj.sensor.px,obj.optics.f,obj.scenario.altitude);
             % Orbital velocity
             Vorb = sqrt(mi/(Re+obj.scenario.altitude));
             % Pixel velocity
@@ -496,7 +553,7 @@ classdef image_processing < handle
             end
 
             % Compute the saturation time
-            obj.Tsaturation = obj.sensor.full_well/obj.scenario.photon_flux;
+            obj.Tsaturation = obj.sensor.full_well/obj.scenario.electron_rate;
             Tsat = obj.Tsaturation;
         end
     end
@@ -534,6 +591,25 @@ classdef image_processing < handle
             end
             fwrite(fid, jsonStr, 'char');
             fclose(fid);
+        end
+    end
+
+    methods (Access = private)
+        function py_init(obj)
+            % PY_INIT Initializes Python so it can be run from MATLAB.
+
+            % Load Python env if not loaded
+            if pyenv().Status == "NotLoaded"
+                envpath = fullfile(obj.base_dir,"env","Scripts","python.exe");
+                pyenv("Version",envpath);
+            end
+
+            radiative_transfer_path = fullfile(obj.base_dir,"src","analysis","radiative_transfer");
+
+            % Add module path
+            if ~any(string(py.sys.path) == radiative_transfer_path)
+                insert(py.sys.path, int32(0), radiative_transfer_path);
+            end
         end
     end
 end

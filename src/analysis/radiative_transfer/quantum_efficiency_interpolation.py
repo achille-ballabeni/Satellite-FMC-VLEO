@@ -13,6 +13,7 @@ xmax = qe.wl_max
 wavelengths_r = np.array(qe.red_wl_RAW)
 wavelengths_g = np.array(qe.green_wl_RAW)
 wavelengths_b = np.array(qe.blue_wl_RAW)
+
 # Define RGB values at 50nm intervals (read from plot)
 color_r = np.array(qe.red_RAW)
 color_g = np.array(qe.green_RAW)
@@ -34,13 +35,25 @@ color_b = clean_array(color_b)
 
 # Create interpolation functions (cubic spline)
 interp_r = interpolate.interp1d(
-    wavelengths_r, color_r, kind="cubic", bounds_error=False, fill_value="extrapolate"
+    wavelengths_r,
+    color_r,
+    kind="cubic",
+    bounds_error=False,
+    fill_value="extrapolate",
 )
 interp_g = interpolate.interp1d(
-    wavelengths_g, color_g, kind="cubic", bounds_error=False, fill_value="extrapolate"
+    wavelengths_g,
+    color_g,
+    kind="cubic",
+    bounds_error=False,
+    fill_value="extrapolate",
 )
 interp_b = interpolate.interp1d(
-    wavelengths_b, color_b, kind="cubic", bounds_error=False, fill_value="extrapolate"
+    wavelengths_b,
+    color_b,
+    kind="cubic",
+    bounds_error=False,
+    fill_value="extrapolate",
 )
 
 # Generate 2.5nm spacing

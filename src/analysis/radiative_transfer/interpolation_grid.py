@@ -26,7 +26,8 @@ ax.set_title("Click points")
 ax.set_xlim(xmin, xmax)
 ax.set_ylim(ymin, ymax)
 
-# Grid with spacing: set spacing to match the same in the original picture for confirmation
+# Grid with spacing: set spacing to match the same in the original picture
+# for confirmation
 x_spacing = 50  # [nm]
 y_spacing = 10  # [%]
 ax.set_xticks(range(xmin, xmax + 1, x_spacing))
