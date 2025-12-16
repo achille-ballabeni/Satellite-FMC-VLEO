@@ -144,10 +144,16 @@ classdef image_processing < handle
                 obj
                 options.altitude (1,1) double = 250000
                 options.photon_flux (1,1) double = 0
+                options.month (1,1) double = 1
+                options.latitude (1,1) double = 46
+                options.beta_angle (1,1) double = 22.5
             end
 
             % Set altitude
             obj.scenario.altitude = options.altitude;
+            obj.scenario.month = options.month;
+            obj.scenario.latitude = options.latitude;
+            obj.scenario.beta_angle = options.beta_angle;
 
             % Update saturation and blur when scenario is changed
             if ~isempty(obj.sensor) && ~isempty(obj.optics)
@@ -169,7 +175,10 @@ classdef image_processing < handle
             % Run radiative transfer model to obtain electron flux
             file_with_arguments = radiative_transfer_py ...
                 + " --sixs_path " + sixs_path ...
-                + " --sensor " + obj.sensor.name;
+                + " --sensor " + obj.sensor.name ...
+                + " --month " + obj.scenario.month ...
+                + " --beta_angle " + obj.scenario.beta_angle ...
+                + " --latitude " + obj.scenario.latitude;
             fprintf("Running 6SV simulation...\n")
             outvar = pyrunfile(file_with_arguments,"matlab_output");
 
