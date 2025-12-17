@@ -14,6 +14,7 @@ classdef image_processing < handle
 
         OFout % Output results for optical flow analysis
         SNRout % Output results for SNR analysis
+        GEOout % Output results for geometrical analysis
     end
 
     methods
@@ -25,6 +26,10 @@ classdef image_processing < handle
             %   options.db_path - Path to the image database folder. If
             %       "default", loads the internal test database.
             %     string, default "default"
+            %   options.optics - Name of the payload optics to use.
+            %     string, default "TriScape100"
+            %   options.sensor - Name of the sensor to use.
+            %     string, default "CMV12000"
             %
             % Output Arguments
             %   obj - Initialized image-processing object with loaded image
@@ -137,16 +142,19 @@ classdef image_processing < handle
             %     object
             %   options.altitude - Scenario altitude value.
             %     scalar double, default 250000
-            %   options.photon_flux - Incoming photon flux level.
-            %     scalar double, default 1.8e7
+            %   options.month - Month to use for the 6SV simulation.
+            %     scalar double, default 1
+            %   options.latitude - Latitude of the satellite.
+            %     scalar double, default 0
+            %   options.beta_angle - Sun-Earth-Satellite angle.
+            %     scalar double, default 1
 
             arguments (Input)
                 obj
                 options.altitude (1,1) double = 250000
-                options.photon_flux (1,1) double = 0
                 options.month (1,1) double = 1
-                options.latitude (1,1) double = 46
-                options.beta_angle (1,1) double = 22.5
+                options.latitude (1,1) double = 0
+                options.beta_angle (1,1) double = 0
             end
 
             % Set altitude
@@ -179,7 +187,7 @@ classdef image_processing < handle
                 + " --month " + obj.scenario.month ...
                 + " --beta_angle " + obj.scenario.beta_angle ...
                 + " --latitude " + obj.scenario.latitude;
-            fprintf("Running 6SV simulation...\n")
+            fprintf("Running 6SV simulation with beta = %.2f | latitude = %.2f | month = %d ...\n",obj.scenario.beta_angle,obj.scenario.latitude,obj.scenario.month)
             outvar = pyrunfile(file_with_arguments,"matlab_output");
 
             % Extract results and compute maximum electron rate
@@ -266,6 +274,7 @@ classdef image_processing < handle
                 'Tsaturation', [], ...
                 'scenario', struct, ...
                 'sensor', struct, ...
+                'optics', struct, ...
                 'data', substruct), ...
                 n, 1);
 
@@ -287,6 +296,7 @@ classdef image_processing < handle
                 obj.OFout(i).Tsaturation = obj.Tsaturation;
                 obj.OFout(i).scenario = obj.scenario;
                 obj.OFout(i).sensor = obj.sensor;
+                obj.OFout(i).optics = obj.optics;
 
                 % Set index per each combination in resolution
                 index = 1;
@@ -427,7 +437,9 @@ classdef image_processing < handle
             n = length(options.exposures);
 
             % Initialize output variables
-            obj.SNRout = struct('sensor', obj.sensor, ...
+            obj.SNRout = struct( ...
+                'optics', obj.optics,...
+                'sensor', obj.sensor, ...
                 'scenario', obj.scenario, ...
                 'blur', options.blur, ...
                 'noise', options.noise, ...
@@ -493,11 +505,62 @@ classdef image_processing < handle
 
             % Export results
             if options.blur
-                name = obj.sensor.name + "_blur_" + "SNR_results";
+                name = obj.sensor.name + "_" + obj.optics.name + "_blur_" + "SNR_results";
             else
-                name = obj.sensor.name + "_SNR_results";
+                name = obj.sensor.name + "_" + obj.optics.name + "_SNR_results";
             end
             out = obj.SNRout;
+            obj.export_results(name,out)
+        end
+
+        function runGEOMETRY(obj,options)
+            arguments (Input)
+                obj
+                options.latitudes (1,:) double = 45
+                options.beta (1,:) double = 22.5
+            end
+
+            % Number of beta/latitude simulations
+            n = length(options.beta);
+            m = length(options.latitudes);
+
+            % Initialize output variables
+            obj.GEOout = struct( ...
+                'sensor', obj.sensor, ...
+                'optics', obj.optics, ...
+                'integrated_filter_function', obj.scenario.integrated_filter_function, ...
+                'max_rate_band', obj.scenario.max_rate_band, ...
+                'month', obj.scenario.month, ...
+                'latitudes', options.latitudes, ...
+                'beta', options.beta, ...
+                'Tsaturation', [], ...
+                'Tblur', [], ...
+                'electron_rate', []);
+
+            saturation_data = zeros(n,m);
+            blur_data = zeros(n,m);
+            electron_rate_data = zeros(n,m);
+
+            % Loop beta angles
+            for i = 1:n
+                beta = options.beta(i);
+                % Loop latitudes
+                for k = 1:m
+                    lat = options.latitudes(k);
+                    obj.set_scenario("beta_angle",beta,"latitude",lat)
+                    saturation_data(i,k) = obj.Tsaturation;
+                    blur_data(i,k) = obj.Tblur;
+                    electron_rate_data(i,k) = obj.scenario.electron_rate;
+                end
+            end
+            % Prepare reuslts
+            obj.GEOout.Tsaturation = saturation_data;
+            obj.GEOout.Tblur = blur_data;
+            obj.GEOout.electron_rate = electron_rate_data;
+
+            % Export results
+            name = obj.sensor.name + "_" + obj.optics.name + "_GEO_results";
+            out = obj.GEOout;
             obj.export_results(name,out)
         end
 
@@ -529,7 +592,7 @@ classdef image_processing < handle
             J2 = 1.082635854e-3;
             sma = Re+obj.scenario.altitude;
             inc_SSO = acos(-2/3*dOmega_dt/J2*(sma/Re)^2*sqrt(sma^3/mi)); %TODO: where should I move this calculation?
-            Vearth = We*Re;
+            Vearth = We*Re*cosd(obj.scenario.latitude);
             % Ground sampling distance
             GSD = gsd(obj.sensor.px,obj.optics.f,obj.scenario.altitude);
             % Orbital velocity
@@ -565,10 +628,8 @@ classdef image_processing < handle
             obj.Tsaturation = obj.sensor.full_well/obj.scenario.electron_rate;
             Tsat = obj.Tsaturation;
         end
-    end
 
-    methods (Static)
-        function export_results(name,output)
+        function export_results(obj,name,output)
             % EXPORT_RESULTS Saves the specified output data to .mat and
             % .json files with a timestamped filename.
             %
@@ -579,6 +640,7 @@ classdef image_processing < handle
             %     any
 
             arguments (Input)
+                obj
                 name
                 output
             end
@@ -586,8 +648,7 @@ classdef image_processing < handle
             % Define path
             timestamp = string(datetime('now','Format','uuuu-MM-dd_HH-mm-ss'));
             filename = timestamp + "_" + name;
-            current_dir = fileparts(mfilename("fullpath"));
-            savedir = fullfile(current_dir,"..","..","..","IM_results");
+            savedir = fullfile(obj.base_dir,"IM_results");
             mkdir(savedir)
             savepath = fullfile(savedir,filename);
 

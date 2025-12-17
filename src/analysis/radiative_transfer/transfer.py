@@ -162,14 +162,14 @@ if __name__ == "__main__":
             electrons_ppx = (
                 electron_flux * deltaL * math.pi / 4 * (d / f) ** 2 * tau * px**2
             )
-            saturation_time = well / electrons_ppx * 1e6  # [microseconds]
+            saturation_time = well / electrons_ppx * 1e3  # [milliseconds]
 
             # Show results
             if args.verbose:
                 print("Electron flux [electrons/m^2*m*sr]: " + str(electron_flux))
                 print("Integrated filter function [m]: " + str(deltaL))
                 print("Electrons rate per pixel [electrons/s]: " + str(electrons_ppx))
-                print("Saturation time [microseconds]: " + str(saturation_time))
+                print("Saturation time [milliseconds]: " + str(saturation_time))
         else:
             if args.verbose:
                 print("Electron flux [electrons/m^2*m*sr]: " + str(electron_flux))
