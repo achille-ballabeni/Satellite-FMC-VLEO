@@ -514,10 +514,25 @@ classdef image_processing < handle
         end
 
         function runGEOMETRY(obj,options)
+            % RUNGEOMETRY Computes exposure and blur times for various beta
+            % angles and latitudes.
+            %
+            % Input Arguments
+            %   obj - Object containing images, sensor, and scenario
+            %       parameters.
+            %     object
+            %   options.latitudes - Array of latitudes to test.
+            %     1-by-n double, default 45
+            %   options.beta - Array of beta angles to test.
+            %     1-by-m double, default 22.5
+            %   options.saturation - Flag to compute 20% saturation time.
+            %     scalar logica, default false
+
             arguments (Input)
                 obj
                 options.latitudes (1,:) double = 45
                 options.beta (1,:) double = 22.5
+                options.saturation (1,1) logical = false
             end
 
             % Number of beta/latitude simulations
@@ -535,11 +550,13 @@ classdef image_processing < handle
                 'beta', options.beta, ...
                 'Tsaturation', [], ...
                 'Tblur', [], ...
-                'electron_rate', []);
+                'electron_rate', [], ...
+                'Tsaturation_20perc', []);
 
             saturation_data = zeros(n,m);
             blur_data = zeros(n,m);
             electron_rate_data = zeros(n,m);
+            saturation_percentile_data = zeros(n,m);
 
             % Loop beta angles
             for i = 1:n
@@ -551,12 +568,22 @@ classdef image_processing < handle
                     saturation_data(i,k) = obj.Tsaturation;
                     blur_data(i,k) = obj.Tblur;
                     electron_rate_data(i,k) = obj.scenario.electron_rate;
+                    % Compute average 20% pixel saturation time
+                    if options.saturation
+                        p = zeros(length(obj.nImages));
+                        for j = 1:obj.nImages
+                            p(j) = prctile(obj.images{j}(:),80)-1;
+                        end
+                        Tsat_perc = mean(255./p.*obj.Tsaturation);
+                        saturation_percentile_data(i,k) = Tsat_perc;
+                    end
                 end
             end
             % Prepare reuslts
             obj.GEOout.Tsaturation = saturation_data;
             obj.GEOout.Tblur = blur_data;
             obj.GEOout.electron_rate = electron_rate_data;
+            obj.GEOout.Tsaturation_20perc = saturation_percentile_data;
 
             % Export results
             name = obj.sensor.name + "_" + obj.optics.name + "_GEO_results";
