@@ -195,7 +195,7 @@ classdef image_processing < handle
             colors = cellfun(@(d) string(d{"color"}), dict_list);
             electron_flux = cellfun(@(d) double(d{"electron_flux"}), dict_list);
             deltaL = cellfun(@(d) double(d{"integrated_filter_function"}), dict_list);
-            electron_rate = electron_flux .* deltaL * pi ./ 4 .* (obj.optics.D / obj.optics.f) .^ 2 .* obj.sensor.px^2;
+            electron_rate = electron_flux .* deltaL * pi ./ 4 .* (obj.optics.D / obj.optics.f) .^ 2 .* obj.sensor.px^2 .* obj.optics.tau;
             [m,i] = max(electron_rate);
             obj.scenario.electron_rate = m;
             obj.scenario.max_rate_band = colors(i);

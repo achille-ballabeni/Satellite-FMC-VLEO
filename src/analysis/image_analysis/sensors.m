@@ -13,6 +13,12 @@ switch lower(name)
         cfg.gain = 255/cfg.full_well;
         cfg.px = 5.86*10^-6;
 
+    case 'gmax3265'
+        cfg.name = "GMAX3265";
+        cfg.full_well = 10600;
+        cfg.gain = 255/cfg.full_well;
+        cfg.px = 3.2*10^-6;
+
     otherwise
         error('Unknown sensor: %s', name);
 end

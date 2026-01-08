@@ -31,7 +31,7 @@ def run_cli():
         "--sensor",
         type=str,
         default="CMV12000",
-        choices=["CMV12000", "IMX249"],
+        choices=["CMV12000", "IMX249", "GMAX3265"],
         help="Sensor name",
     )
     parser.add_argument(
@@ -117,6 +117,8 @@ if __name__ == "__main__":
         qe.CMV12000()
     elif args.sensor == "IMX249":
         qe.IMX249()
+    elif args.sensor == "GMAX3265":
+        qe.GMAX3265()
     else:
         raise ValueError("Unsupported sensor name. Use IMX249 or CMV12000.")
 
@@ -124,7 +126,7 @@ if __name__ == "__main__":
     f = 580e-3  # [m]
     d = 95e-3  # [m]
     px = 5.5e-6  # [m]
-    tau = 1
+    tau = 0.7 # From TriScape200 datasheet
     well = 13500
 
     # Wavelength range and QE

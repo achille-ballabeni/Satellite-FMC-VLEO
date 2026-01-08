@@ -83,3 +83,21 @@ class QE:
 
         self.wl_min = min(self.wl)
         self.wl_max = max(self.wl)
+
+    def GMAX3265(self):
+
+        (
+            self.red_wl_RAW,
+            self.red_RAW,
+            self.green_wl_RAW,
+            self.green_RAW,
+            self.blue_wl_RAW,
+            self.blue_RAW,
+            self.wl,
+            self.red,
+            self.green,
+            self.blue,
+        ) = self.__read_csv("QE_GMAX3265.csv")
+
+        self.wl_min = min(self.wl)
+        self.wl_max = max(self.wl)
