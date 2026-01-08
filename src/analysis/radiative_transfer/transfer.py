@@ -21,9 +21,7 @@ def run_cli():
         "-p",
         "--sixs_path",
         type=str,
-        default=Path(
-            "D:\\AKO\\UNI_AERO\\Tesi_Magistrale\\VLEO_numerical_simulator\\src\\analysis\\radiative_transfer\\6SV1.1\\sixsV1.1"
-        ),
+        default=r"src/analysis/radiative_transfer/6SV1.1/sixsV1.1",
         help="Path to SixS installation",
     )
     parser.add_argument(
@@ -126,7 +124,7 @@ if __name__ == "__main__":
     f = 580e-3  # [m]
     d = 95e-3  # [m]
     px = 5.5e-6  # [m]
-    tau = 0.7 # From TriScape200 datasheet
+    tau = 0.7  # From TriScape200 datasheet
     well = 13500
 
     # Wavelength range and QE
