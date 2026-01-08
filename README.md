@@ -32,7 +32,10 @@ python3.11 -m venv env
 2) Activate environment
 
 ```console
-env/Scripts/activate
+env/Scripts/activate (Windows)
+```
+```console
+. env/bin/activate (Linux/macOS)
 ```
 
 3) Install dependencies
