@@ -11,8 +11,8 @@ on:
         options:
         - 'true'
         - 'false'
-      sensor:
-        description: 'Choose sensor for the simulation'
+      optics:
+        description: 'Choose optics for the simulation'
         required: true
         default: 'TriScape100'
         type: choice
@@ -21,14 +21,26 @@ on:
         - '2m@250'
         - '1.5m@250'
         - '1m@250'
+        - '0.5m@250'
         - 'simulator'
+      sensor:
+        description: 'Choose sensor for the simulation'
+        required: true
+        default: 'CMV12000'
+        type: choice
+        options:
+        - 'CMV12000'
+        - 'IMX249'
+        - 'GMAX3265'
+
 jobs:
   run-SNR-analysis:
     name: Setup MATLAB and run SNR analysis
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v2
         with:
@@ -37,13 +49,27 @@ jobs:
           products: >
             Signal_Processing_Toolbox
             Image_Processing_Toolbox
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m venv env
+          env\Scripts\python.exe -m pip install -r requirements.txt
+
       - name: Run SNR analysis
         uses: matlab-actions/run-command@v2
         with:
           command: |
             proj = openProject(pwd);
-            sensor = "${{ github.event.inputs.sensor || 'TriScape100' }}";
-            im = image_processing("sensor", sensor);
+            optics = "${{ github.event.inputs.optics || 'TriScape100' }}";
+            sensor = "${{ github.event.inputs.sensor || 'CMV12000' }}";
+            im = image_processing("optics", optics, "sensor", sensor);
             im.load_images();
             exposure_input = "${{ github.event.inputs.exposure_times || 'false' }}";
             if strcmp(exposure_input, 'true')
@@ -53,6 +79,7 @@ jobs:
             end
             im.runSNR("blur", true, "noise", true, "exposures", exposure);
             im.runSNR("blur", false, "noise", true, "exposures", exposure);
+
       - name: Upload SNR results
         uses: actions/upload-artifact@v4
         with:
