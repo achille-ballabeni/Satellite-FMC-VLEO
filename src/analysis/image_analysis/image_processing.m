@@ -202,8 +202,8 @@ classdef image_processing < handle
             obj.scenario.integrated_filter_function = deltaL(i);
         end
 
-        function run_OF_analysis(obj,options)
-            % RUN_OF_ANALYSIS Executes an optical flow (OF) performance
+        function runOF_ANALYSIS(obj,options)
+            % RUNOF_ANALYSIS Executes an optical flow (OF) performance
             % analysis across multiple resolutions and imaging conditions.
             %
             % - Runs optical flow estimation using pixel-shifted image
