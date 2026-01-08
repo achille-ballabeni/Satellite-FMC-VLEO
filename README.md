@@ -13,7 +13,7 @@ This project folder contains all scripts and code-related documents that were us
   * Signal Processing Toolbox
   * Simulink
 
-* Python 3.11
+* Python 3.11 (https://www.python.org/downloads/)
 
 **N.B.** Different versions may work but have not been tested yet!
 
