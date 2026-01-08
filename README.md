@@ -17,6 +17,8 @@ This project folder contains all scripts and code-related documents that were us
 
 **N.B.** Different versions may work but have not been tested yet!
 
+**N.B.** The _image_processing()_ class only works on Windows because it runs the sixsV1.1 executable that was compiled on a Windows machine.
+
 ## MATLAB configuration
 This repo is managed via a MATLAB project. To run any code without having path issues simply open the [VLEO_numerical_simulator.prj](https://github.com/achille-ballabeni/VLEO_numerical_simulator/blob/main/VLEO_numerical_simulator.prj) file.
 
