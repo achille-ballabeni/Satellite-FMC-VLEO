@@ -11,6 +11,7 @@ classdef image_processing < handle
         Tblur % Maximum exposure time before blur
         Tsaturation % Maximum exposure time before saturation
         base_dir % Root directory of project
+        GSD % Ground Sampling Distance
 
         OFout % Output results for optical flow analysis
         SNRout % Output results for SNR analysis
@@ -424,7 +425,7 @@ classdef image_processing < handle
 
             arguments (Input)
                 obj
-                options.exposures (1,:) double = 600*10^-6
+                options.exposures (1,:) double = obj.Tsaturation*0.9
                 options.blur (1,1) double = false
                 options.noise (1,1) double = false
             end
@@ -533,6 +534,7 @@ classdef image_processing < handle
                 options.latitudes (1,:) double = 45
                 options.beta (1,:) double = 22.5
                 options.saturation (1,1) logical = false
+                options.altitude (1,1) double = 250
             end
 
             % Number of beta/latitude simulations
@@ -564,7 +566,7 @@ classdef image_processing < handle
                 % Loop latitudes
                 for k = 1:m
                     lat = options.latitudes(k);
-                    obj.set_scenario("beta_angle",beta,"latitude",lat)
+                    obj.set_scenario("beta_angle",beta,"latitude",lat,"altitude",options.altitude)
                     saturation_data(i,k) = obj.Tsaturation;
                     blur_data(i,k) = obj.Tblur;
                     electron_rate_data(i,k) = obj.scenario.electron_rate;
@@ -621,13 +623,13 @@ classdef image_processing < handle
             inc_SSO = acos(-2/3*dOmega_dt/J2*(sma/Re)^2*sqrt(sma^3/mi)); %TODO: where should I move this calculation?
             Vearth = We*Re*cosd(obj.scenario.latitude);
             % Ground sampling distance
-            GSD = gsd(obj.sensor.px,obj.optics.f,obj.scenario.altitude);
+            obj.GSD = gsd(obj.sensor.px,obj.optics.f,obj.scenario.altitude);
             % Orbital velocity
             Vorb = sqrt(mi/(Re+obj.scenario.altitude));
             % Pixel velocity
             Vx = -Vorb + Vearth*cos(inc_SSO);
             Vy = -Vearth*sin(inc_SSO);
-            obj.Vpixel = [Vx, Vy]/GSD;
+            obj.Vpixel = [Vx, Vy]/obj.GSD;
             % Best case blur time
             obj.Tblur = 1/max(abs(obj.Vpixel));
             % Outputs
