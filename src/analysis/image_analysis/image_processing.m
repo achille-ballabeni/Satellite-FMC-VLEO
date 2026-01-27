@@ -345,8 +345,8 @@ classdef image_processing < handle
 
                                 % Add shot noise to image
                                 if noise
-                                    [original_img, ~] = shot_noise(original_img,exposure_time,obj.scenario.electron_rate,1,obj.sensor.full_well,obj.sensor.gain);
-                                    [shifted_img, ~] = shot_noise(shifted_img,exposure_time,obj.scenario.electron_rate,1,obj.sensor.full_well,obj.sensor.gain);
+                                    [original_img, ~] = shot_noise(original_img,exposure_time,obj.scenario.electron_rate,obj.sensor.full_well,obj.sensor.gain);
+                                    [shifted_img, ~] = shot_noise(shifted_img,exposure_time,obj.scenario.electron_rate,obj.sensor.full_well,obj.sensor.gain);
                                 end
 
                             else
