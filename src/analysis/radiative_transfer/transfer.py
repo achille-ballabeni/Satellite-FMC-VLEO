@@ -29,7 +29,7 @@ def run_cli():
         "--sensor",
         type=str,
         default="CMV12000",
-        choices=["CMV12000", "IMX249", "GMAX3265"],
+        choices=["CMV12000", "IMX249", "GMAX3265", "CIS2521", "VITA1300"],
         help="Sensor name",
     )
     parser.add_argument(
@@ -117,8 +117,12 @@ if __name__ == "__main__":
         qe.IMX249()
     elif args.sensor == "GMAX3265":
         qe.GMAX3265()
+    elif args.sensor == "CIS2521":
+        qe.CIS2521()
+    elif args.sensor == "VITA1300":
+        qe.CMV12000()
     else:
-        raise ValueError("Unsupported sensor name. Use IMX249 or CMV12000.")
+        raise ValueError("Unsupported sensor name. Use IMX249, CMV12000, GMAX3265, CIS2521, VITA1300.")
 
     # Set camera
     f = 580e-3  # [m]
