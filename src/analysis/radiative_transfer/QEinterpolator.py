@@ -29,14 +29,14 @@ class QEinterpolator:
         self.raw_data = {"r": [], "g": [], "b": []}
         self.interp_data = None
 
-    def click_points(self, x_spacing=50, y_spacing=0.1):
+    def click_points(self, x_spacing=50, y_spacing=0.1, color="RED"):
         """Interactive point selection on image grid."""
         img = mpimg.imread(self.image_path)
         fig, ax = plt.subplots(figsize=(12, 7))
         ax.imshow(
             img, extent=[self.xmin, self.xmax, self.ymin, self.ymax], aspect="auto"
         )
-        ax.set_title("Click points for one color and close. Repeat for all.")
+        ax.set_title("Click points for " + color + " curve.")
         ax.set_xlabel("Wavelength [nm]")
         ax.set_ylabel("Absolute QE")
         ax.set_xlim(self.xmin, self.xmax)
@@ -129,7 +129,7 @@ class QEinterpolator:
 
         filename = self.name if filename is None else filename
         np.savetxt(
-            filename + ".csv",
+            "QE_" + filename + ".csv",
             data,
             delimiter=",",
             header="wl_r_RAW,qe_r_RAW,wl_g_RAW,qe_g_RAW,wl_b_RAW,qe_b_RAW,"
@@ -186,24 +186,24 @@ class QEinterpolator:
 if __name__ == "__main__":
 
     # Settings
-    name = "GMAX3265"
-    filename = "QE_" + name + ".png"
+    name = "CIS2521"
+    filename = name + ".png"
     path = Path(__file__).parent
     filepath = path / "sensors" / filename
-    xmin = 350
-    xmax = 1040
+    xmin = 400
+    xmax = 1100
     ymin = 0
-    ymax = 0.7
-    x_spacing = 20
+    ymax = 0.6
+    x_spacing = 100
     y_spacing = 0.1
 
     # Initialize
     qe = QEinterpolator(name, filepath, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
 
     # Click points interactively - R -> G -> B
-    wl_r, qe_r = qe.click_points(x_spacing=x_spacing, y_spacing=y_spacing)
-    wl_g, qe_g = qe.click_points(x_spacing=x_spacing, y_spacing=y_spacing)
-    wl_b, qe_b = qe.click_points(x_spacing=x_spacing, y_spacing=y_spacing)
+    wl_r, qe_r = qe.click_points(x_spacing=x_spacing, y_spacing=y_spacing, color="RED")
+    wl_g, qe_g = qe.click_points(x_spacing=x_spacing, y_spacing=y_spacing, color="GREEN")
+    wl_b, qe_b = qe.click_points(x_spacing=x_spacing, y_spacing=y_spacing, color="BLUE")
     # Set raw data
     qe.set_raw_data(wl_r, qe_r, wl_g, qe_g, wl_b, qe_b)
 
@@ -212,4 +212,4 @@ if __name__ == "__main__":
     qe.save_csv()
 
     # Plot from memory or CSV
-    qe.plot(name + ".csv")
+    qe.plot("QE_" + name + ".csv")
