@@ -40,6 +40,11 @@ classdef image_plotting < handle
 
             % Load data
             obj.results = load(obj.resultsPath).output;
+            
+            % Set plot font
+            set(groot, 'defaultAxesFontName', 'CMU Serif');
+            set(groot, 'defaultTextFontName', 'CMU Serif');
+            set(groot, 'defaultLegendFontName', 'CMU Serif');
         end
 
         function plot_inference_time_analysis(obj,options)
