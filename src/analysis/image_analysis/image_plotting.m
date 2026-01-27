@@ -335,7 +335,7 @@ classdef image_plotting < handle
             colors = lines(n);
             
             % Plot mesh with saturation time
-            figure('Name','Saturation Time Analysis')
+            figure('Name','Saturation Time Analysis','Units','centimeters','Position',[0 0 18 13])
             mesh(obj.results.latitudes,obj.results.beta,obj.results.Tsaturation*10^3)
             xlabel('Latitude [deg]', 'FontSize', 12, 'FontWeight', 'bold');
             ylabel('Beta Angle [deg]', 'FontSize', 12, 'FontWeight', 'bold');
@@ -343,19 +343,51 @@ classdef image_plotting < handle
             title('Saturation Time Analysis', 'FontSize', 14, 'FontWeight', 'bold')
 
             % Plot all beta angles in one figure
-            figure('Name','All beta')
+            figure('Name','All beta','Units','centimeters','Position',[0 0 18 13])
+            hold on
+
             for i = 1:n
-                plot(obj.results.Tsaturation(i,:)*10^3, obj.results.latitudes, ...
-                    'LineWidth', 1.5, 'Color', colors(i,:), 'DisplayName', sprintf('T_{sat} β=%.2f°', obj.results.beta(i)))
-                hold on
+                semilogy(obj.results.latitudes, obj.results.Tsaturation(i,:)*1e3, ...
+                    'LineWidth',1.5, ...
+                    'Color',colors(i,:), ...
+                    'DisplayName',sprintf('T_{sat} β=%.2f°',obj.results.beta(i)))
             end
-            plot(obj.results.Tblur(1,:)*10^3, obj.results.latitudes, ...
-                'k--', 'LineWidth', 1.5, 'DisplayName', 'T_{blur}')
-            xlabel('Time [ms]', 'FontSize', 12, 'FontWeight', 'bold');
-            ylabel('Latitude [deg]', 'FontSize', 12, 'FontWeight', 'bold');
-            title('Saturation Time vs Latitude', 'FontSize', 14, 'FontWeight', 'bold')
-            legend('Location', 'best', 'FontSize', 10);
+
+            xlabel('Latitude [deg]','FontSize',13,'FontWeight','bold')
+            title(obj.results.optics.name + " | Saturation Time vs Latitude", ...
+                'FontSize',15,'FontWeight','bold')
+            legend('Location','northwest','FontSize',12,'Orientation','horizontal','NumColumns',2)
             grid on
+
+            % Left axis ticks (log decades with 1–9)
+            Tsat_max = max(obj.results.Tsaturation,[],"all")*1e3;
+            Tsat_min = min(obj.results.Tsaturation,[],"all")*1e3;
+            dmax    = floor(log10(Tsat_max));
+
+            ticks = [];
+            for d = 0:dmax
+                ticks = [ticks, (1:9)*10^d];
+            end
+            ticks = ticks(ticks <= ceil(Tsat_max/10)*10);
+            ticks = [ticks,150];
+
+            yyaxis left
+            set(gca,'YScale','log','YMinorTick','off')
+            ylabel('Time [ms]','FontSize',13,'FontWeight','bold')
+            yticks(ticks)
+            ylim([0.9*Tsat_min ticks(end)])
+
+            % Right axis (normalized)
+            max_sat_normalized = obj.results.Tsaturation(end,end)/obj.results.Tblur(1,1);
+            factor = max_sat_normalized / Tsat_max;
+            normalized_ticks = ticks * factor;
+
+            yyaxis right
+            set(gca,'YScale','log','YColor','k','YMinorTick','off')
+            ylabel('T_{sat}/T_{blur}','FontSize',13,'FontWeight','bold')
+            yticks(normalized_ticks)
+            ylim([0.9*Tsat_min*factor normalized_ticks(end)])
+            ytickformat('%.1f')
 
             % Plot saturation time vs blur for each latitude
             for i = 1:n
@@ -366,7 +398,7 @@ classdef image_plotting < handle
                 Tblur = obj.results.Tblur(i,:);
 
                 % Plot saturation and blur
-                figure('Name',sprintf('Beta %.2f',beta))
+                figure('Name',sprintf('Beta %.2f',beta),'Units','centimeters','Position',[0 0 18 13])
                 plot(Tsaturation*10^3,latitudes,'LineWidth',1.5,'Color',colors(i,:))
                 hold on
                 plot(Tblur*10^3,latitudes,'LineWidth',1.5,'Color',colors(i,:),'LineStyle','--')
@@ -378,7 +410,7 @@ classdef image_plotting < handle
                 grid on
 
                 % Plot range between blur and saturation
-                figure('Name',sprintf('Beta %.2f - Range',beta))
+                figure('Name',sprintf('Beta %.2f - Range',beta),'Units','centimeters','Position',[0 0 18 13])
                 for j = 1:length(latitudes)
                     plot([Tblur(j)*10^3, Tsaturation(j)*10^3], [latitudes(j), latitudes(j)], ...
                         'Color',colors(i,:), 'LineWidth', 1.5)
