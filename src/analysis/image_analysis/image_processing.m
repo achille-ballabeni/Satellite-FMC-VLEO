@@ -359,8 +359,8 @@ classdef image_processing < handle
 
                                 % Add shot noise to image
                                 if noise
-                                    [original_img, ~] = shot_noise(original_img,exposure_time,obj.scenario.electron_rate,1,obj.sensor.full_well,obj.sensor.gain);
-                                    [shifted_img, ~] = shot_noise(shifted_img,exposure_time,obj.scenario.electron_rate,1,obj.sensor.full_well,obj.sensor.gain);
+                                    [original_img, ~] = shot_noise(original_img,exposure_time,obj.scenario.electron_rate,obj.sensor.full_well,obj.sensor.gain);
+                                    [shifted_img, ~] = shot_noise(shifted_img,exposure_time,obj.scenario.electron_rate,obj.sensor.full_well,obj.sensor.gain);
                                     % Remove noise from padded values
                                     shifted_img(padded_mask) = 0;
                                 end
@@ -469,6 +469,11 @@ classdef image_processing < handle
                     image = obj.images{k};
                     ref = image;
 
+                    %% REMOVE %%
+                    r = centerCropWindow2d(size(image), [150,150]);
+                    image = imcrop(image, r);
+                    ref = image;
+
                     % Add motion blur
                     if options.blur
                         blur_shift = Vpx.*time;
@@ -477,7 +482,7 @@ classdef image_processing < handle
 
                     % Add noise
                     if options.noise
-                        [image, ~] = shot_noise(image,time,obj.scenario.electron_rate,1,obj.sensor.full_well,obj.sensor.gain);
+                        [image, ~] = shot_noise(image,time,obj.scenario.electron_rate,obj.sensor.full_well,obj.sensor.gain);
                         % TODO: improve computations. This is already
                         % computed inside shot noise. Maybe make a class to
                         % contain all methods related to the image
