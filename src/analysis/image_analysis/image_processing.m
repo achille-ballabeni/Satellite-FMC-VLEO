@@ -469,11 +469,6 @@ classdef image_processing < handle
                     image = obj.images{k};
                     ref = image;
 
-                    %% REMOVE %%
-                    r = centerCropWindow2d(size(image), [150,150]);
-                    image = imcrop(image, r);
-                    ref = image;
-
                     % Add motion blur
                     if options.blur
                         blur_shift = Vpx.*time;
