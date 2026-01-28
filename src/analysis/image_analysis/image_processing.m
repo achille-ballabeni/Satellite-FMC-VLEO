@@ -6,12 +6,16 @@ classdef image_processing < handle
         nImages % Number of images
         sensor % Imaging sensor selection
         scenario % Orbital scenario
+        optics % Imaging payload optics
         Vpixel % Pixel velocity
         Tblur % Maximum exposure time before blur
         Tsaturation % Maximum exposure time before saturation
+        base_dir % Root directory of project
+        GSD % Ground Sampling Distance
 
         OFout % Output results for optical flow analysis
         SNRout % Output results for SNR analysis
+        GEOout % Output results for geometrical analysis
     end
 
     methods
@@ -23,6 +27,10 @@ classdef image_processing < handle
             %   options.db_path - Path to the image database folder. If
             %       "default", loads the internal test database.
             %     string, default "default"
+            %   options.optics - Name of the payload optics to use.
+            %     string, default "TriScape100"
+            %   options.sensor - Name of the sensor to use.
+            %     string, default "CMV12000"
             %
             % Output Arguments
             %   obj - Initialized image-processing object with loaded image
@@ -31,12 +39,19 @@ classdef image_processing < handle
 
             arguments (Input)
                 options.db_path string = "default"
-                options.sensor string = "TriScape100"
+                options.optics string = "TriScape100"
+                options.sensor string = "CMV12000"
             end
+
+            % Project root folder
+            obj.base_dir = matlab.project.currentProject().RootFolder;
+
+            % Initialize python
+            obj.py_init()
 
             % Select database folder
             if options.db_path == "default"
-                path = fullfile(fileparts(mfilename("fullpath")),'..','..','media','test_db','*.jpg');
+                path = fullfile(obj.base_dir,'src','media','test_db','*.jpg');
             elseif isfolder(options.db_path)
                 path = fullfile(options.db_path,'*.jpg');
             else
@@ -51,6 +66,7 @@ classdef image_processing < handle
             end
 
             % Initialize parameters
+            obj.set_optics('optics',options.optics);
             obj.set_sensor('sensor',options.sensor);
             obj.set_scenario();
         end
@@ -69,6 +85,31 @@ classdef image_processing < handle
             end
         end
 
+        function set_optics(obj,options)
+            % SET_OPTICS Initializes the payload optics model used by the
+            % object.
+            %
+            % Input Arguments
+            %   obj - Object whose optics configuration will be updated.
+            %     object
+            %   options.optics - Name of the payload optics to use.
+            %     string, default "triscape100"
+
+            arguments (Input)
+                obj
+                options.optics string = "triscape100"
+            end
+
+            obj.optics = payload_optics(options.optics);
+
+            % Update saturation and blur when optics is changed
+            if ~isempty(obj.scenario) && ~isempty(obj.sensor)
+                obj.electron_flux();
+                obj.saturation();
+                obj.Vshift();
+            end
+        end
+
         function set_sensor(obj,options)
             % SET_SENSOR Initializes the sensor model used by the object.
             %
@@ -76,18 +117,18 @@ classdef image_processing < handle
             %   obj - Object whose sensor configuration will be updated.
             %     object
             %   options.sensor - Name of the sensor model to load.
-            %     string, default "triscape100"
+            %     string, default "CMV12000"
 
             arguments (Input)
                 obj
-                options.sensor string = "triscape100"
+                options.sensor string = "CMV12000"
             end
 
             obj.sensor = sensors(options.sensor);
 
-            % Update saturation and blur
-            if ~isempty(obj.scenario)
-                obj.set_scenario("altitude",obj.scenario.altitude)
+            % Update saturation and blur when sensor is changed
+            if ~isempty(obj.scenario) && ~isempty(obj.optics)
+                obj.electron_flux();
                 obj.saturation();
                 obj.Vshift();
             end
@@ -102,34 +143,68 @@ classdef image_processing < handle
             %     object
             %   options.altitude - Scenario altitude value.
             %     scalar double, default 250000
-            %   options.photon_flux - Incoming photon flux level.
-            %     scalar double, default 1.8e7
+            %   options.month - Month to use for the 6SV simulation.
+            %     scalar double, default 1
+            %   options.latitude - Latitude of the satellite.
+            %     scalar double, default 0
+            %   options.beta_angle - Sun-Earth-Satellite angle.
+            %     scalar double, default 1
 
             arguments (Input)
                 obj
                 options.altitude (1,1) double = 250000
-                options.photon_flux (1,1) double = 0
-            end
-            
-            % Set altitude
-            obj.scenario.altitude = options.altitude;
-            
-            % Set flux
-            if options.photon_flux == 0
-                obj.scenario.photon_flux = max([obj.sensor.photon_flux_RED,obj.sensor.photon_flux_GREEN,obj.sensor.photon_flux_BLUE]);
-            else
-                obj.scenario.photon_flux = options.photon_flux;
+                options.month (1,1) double = 1
+                options.latitude (1,1) double = 0
+                options.beta_angle (1,1) double = 0
             end
 
-            % Update saturation and blur
-            if ~isempty(obj.sensor)
+            % Set altitude
+            obj.scenario.altitude = options.altitude;
+            obj.scenario.month = options.month;
+            obj.scenario.latitude = options.latitude;
+            obj.scenario.beta_angle = options.beta_angle;
+
+            % Update saturation and blur when scenario is changed
+            if ~isempty(obj.sensor) && ~isempty(obj.optics)
+                obj.electron_flux();
                 obj.saturation();
                 obj.Vshift();
             end
         end
 
-        function run_OF_analysis(obj,options)
-            % RUN_OF_ANALYSIS Executes an optical flow (OF) performance
+        function electron_flux(obj)
+            % ELECTRON_FLUX Runs 6SV simulation based on sensor, scenario and
+            % optics. Saves results in obj.scenario.electron_rate.
+
+            % sixsV1.1 path
+            radiative_transfer_path = fullfile(obj.base_dir,"src","analysis","radiative_transfer");
+            radiative_transfer_py = fullfile(radiative_transfer_path,"transfer.py");
+            sixs_path = fullfile(radiative_transfer_path,"6SV1.1","sixsV1.1");
+
+            % Run radiative transfer model to obtain electron flux
+            file_with_arguments = radiative_transfer_py ...
+                + " --sixs_path " + sixs_path ...
+                + " --sensor " + obj.sensor.name ...
+                + " --month " + obj.scenario.month ...
+                + " --beta_angle " + obj.scenario.beta_angle ...
+                + " --latitude " + obj.scenario.latitude;
+            fprintf("Running 6SV simulation with beta = %.2f | latitude = %.2f | month = %d ...\n",obj.scenario.beta_angle,obj.scenario.latitude,obj.scenario.month)
+            outvar = pyrunfile(file_with_arguments,"matlab_output");
+
+            % Extract results and compute maximum electron rate
+            dict_list = cell(outvar);
+            colors = cellfun(@(d) string(d{"color"}), dict_list);
+            electron_flux = cellfun(@(d) double(d{"electron_flux"}), dict_list);
+            deltaL = cellfun(@(d) double(d{"integrated_filter_function"}), dict_list);
+            electron_rate = electron_flux .* deltaL * pi ./ 4 .* (obj.optics.D / obj.optics.f) .^ 2 .* obj.sensor.px^2 .* obj.optics.tau;
+            [m,i] = max(electron_rate);
+            obj.scenario.electron_rate = m;
+            obj.scenario.max_rate_band = colors(i);
+            obj.scenario.integrated_filter_function = deltaL(i);
+        end
+
+        function runOF_ANALYSIS(obj,options)
+            % RUNOF_ANALYSIS Executes an optical flow (OF) performance
             % analysis across multiple resolutions and imaging conditions.
             %
             % - Runs optical flow estimation using pixel-shifted image
@@ -200,6 +275,7 @@ classdef image_processing < handle
                 'Tsaturation', [], ...
                 'scenario', struct, ...
                 'sensor', struct, ...
+                'optics', struct, ...
                 'data', substruct), ...
                 n, 1);
 
@@ -221,6 +297,7 @@ classdef image_processing < handle
                 obj.OFout(i).Tsaturation = obj.Tsaturation;
                 obj.OFout(i).scenario = obj.scenario;
                 obj.OFout(i).sensor = obj.sensor;
+                obj.OFout(i).optics = obj.optics;
 
                 % Set index per each combination in resolution
                 index = 1;
@@ -269,8 +346,8 @@ classdef image_processing < handle
 
                                 % Add shot noise to image
                                 if noise
-                                    [original_img, ~] = shot_noise(original_img,exposure_time,obj.scenario.photon_flux,1,obj.sensor.full_well,obj.sensor.gain);
-                                    [shifted_img, ~] = shot_noise(shifted_img,exposure_time,obj.scenario.photon_flux,1,obj.sensor.full_well,obj.sensor.gain);
+                                    [original_img, ~] = shot_noise(original_img,exposure_time,obj.scenario.electron_rate,obj.sensor.full_well,obj.sensor.gain);
+                                    [shifted_img, ~] = shot_noise(shifted_img,exposure_time,obj.scenario.electron_rate,obj.sensor.full_well,obj.sensor.gain);
                                 end
 
                             else
@@ -282,8 +359,8 @@ classdef image_processing < handle
 
                                 % Add shot noise to image
                                 if noise
-                                    [original_img, ~] = shot_noise(original_img,exposure_time,obj.scenario.photon_flux,1,obj.sensor.full_well,obj.sensor.gain);
-                                    [shifted_img, ~] = shot_noise(shifted_img,exposure_time,obj.scenario.photon_flux,1,obj.sensor.full_well,obj.sensor.gain);
+                                    [original_img, ~] = shot_noise(original_img,exposure_time,obj.scenario.electron_rate,obj.sensor.full_well,obj.sensor.gain);
+                                    [shifted_img, ~] = shot_noise(shifted_img,exposure_time,obj.scenario.electron_rate,obj.sensor.full_well,obj.sensor.gain);
                                     % Remove noise from padded values
                                     shifted_img(padded_mask) = 0;
                                 end
@@ -348,7 +425,7 @@ classdef image_processing < handle
 
             arguments (Input)
                 obj
-                options.exposures (1,:) double = 600*10^-6
+                options.exposures (1,:) double = obj.Tsaturation*0.9
                 options.blur (1,1) double = false
                 options.noise (1,1) double = false
             end
@@ -361,7 +438,9 @@ classdef image_processing < handle
             n = length(options.exposures);
 
             % Initialize output variables
-            obj.SNRout = struct('sensor', obj.sensor, ...
+            obj.SNRout = struct( ...
+                'optics', obj.optics,...
+                'sensor', obj.sensor, ...
                 'scenario', obj.scenario, ...
                 'blur', options.blur, ...
                 'noise', options.noise, ...
@@ -374,7 +453,7 @@ classdef image_processing < handle
                 'mean_SNR',[], ...
                 'SNR',[]), ...
                 n, 1);
-            
+
             snr = zeros(1,obj.nImages);
 
             for i = 1:n
@@ -398,12 +477,12 @@ classdef image_processing < handle
 
                     % Add noise
                     if options.noise
-                        [image, ~] = shot_noise(image,time,obj.scenario.photon_flux,1,obj.sensor.full_well,obj.sensor.gain);
+                        [image, ~] = shot_noise(image,time,obj.scenario.electron_rate,obj.sensor.full_well,obj.sensor.gain);
                         % TODO: improve computations. This is already
                         % computed inside shot noise. Maybe make a class to
                         % contain all methods related to the image
                         % processing.
-                        ref = obj.scenario.photon_flux*time*double(ref)./255*obj.sensor.gain;
+                        ref = obj.scenario.electron_rate*time*double(ref)./255*obj.sensor.gain;
                     end
 
                     % Compute SNR
@@ -427,11 +506,90 @@ classdef image_processing < handle
 
             % Export results
             if options.blur
-                name = obj.sensor.name + "_blur_" + "SNR_results";
+                name = obj.sensor.name + "_" + obj.optics.name + "_blur_" + "SNR_results";
             else
-                name = obj.sensor.name + "_SNR_results";
+                name = obj.sensor.name + "_" + obj.optics.name + "_SNR_results";
             end
             out = obj.SNRout;
+            obj.export_results(name,out)
+        end
+
+        function runGEOMETRY(obj,options)
+            % RUNGEOMETRY Computes exposure and blur times for various beta
+            % angles and latitudes.
+            %
+            % Input Arguments
+            %   obj - Object containing images, sensor, and scenario
+            %       parameters.
+            %     object
+            %   options.latitudes - Array of latitudes to test.
+            %     1-by-n double, default 45
+            %   options.beta - Array of beta angles to test.
+            %     1-by-m double, default 22.5
+            %   options.saturation - Flag to compute 20% saturation time.
+            %     scalar logica, default false
+
+            arguments (Input)
+                obj
+                options.latitudes (1,:) double = 45
+                options.beta (1,:) double = 22.5
+                options.saturation (1,1) logical = false
+                options.altitude (1,1) double = 250
+            end
+
+            % Number of beta/latitude simulations
+            n = length(options.beta);
+            m = length(options.latitudes);
+
+            % Initialize output variables
+            obj.GEOout = struct( ...
+                'sensor', obj.sensor, ...
+                'optics', obj.optics, ...
+                'integrated_filter_function', obj.scenario.integrated_filter_function, ...
+                'max_rate_band', obj.scenario.max_rate_band, ...
+                'month', obj.scenario.month, ...
+                'latitudes', options.latitudes, ...
+                'beta', options.beta, ...
+                'Tsaturation', [], ...
+                'Tblur', [], ...
+                'electron_rate', [], ...
+                'Tsaturation_20perc', []);
+
+            saturation_data = zeros(n,m);
+            blur_data = zeros(n,m);
+            electron_rate_data = zeros(n,m);
+            saturation_percentile_data = zeros(n,m);
+
+            % Loop beta angles
+            for i = 1:n
+                beta = options.beta(i);
+                % Loop latitudes
+                for k = 1:m
+                    lat = options.latitudes(k);
+                    obj.set_scenario("beta_angle",beta,"latitude",lat,"altitude",options.altitude)
+                    saturation_data(i,k) = obj.Tsaturation;
+                    blur_data(i,k) = obj.Tblur;
+                    electron_rate_data(i,k) = obj.scenario.electron_rate;
+                    % Compute average 20% pixel saturation time
+                    if options.saturation
+                        p = zeros(length(obj.nImages));
+                        for j = 1:obj.nImages
+                            p(j) = prctile(obj.images{j}(:),80)-1;
+                        end
+                        Tsat_perc = mean(255./p.*obj.Tsaturation);
+                        saturation_percentile_data(i,k) = Tsat_perc;
+                    end
+                end
+            end
+            % Prepare reuslts
+            obj.GEOout.Tsaturation = saturation_data;
+            obj.GEOout.Tblur = blur_data;
+            obj.GEOout.electron_rate = electron_rate_data;
+            obj.GEOout.Tsaturation_20perc = saturation_percentile_data;
+
+            % Export results
+            name = obj.sensor.name + "_" + obj.optics.name + "_GEO_results";
+            out = obj.GEOout;
             obj.export_results(name,out)
         end
 
@@ -463,15 +621,15 @@ classdef image_processing < handle
             J2 = 1.082635854e-3;
             sma = Re+obj.scenario.altitude;
             inc_SSO = acos(-2/3*dOmega_dt/J2*(sma/Re)^2*sqrt(sma^3/mi)); %TODO: where should I move this calculation?
-            Vearth = We*Re;
+            Vearth = We*Re*cosd(obj.scenario.latitude);
             % Ground sampling distance
-            GSD = gsd(obj.sensor.px,obj.sensor.f,obj.scenario.altitude);
+            obj.GSD = gsd(obj.sensor.px,obj.optics.f,obj.scenario.altitude);
             % Orbital velocity
             Vorb = sqrt(mi/(Re+obj.scenario.altitude));
             % Pixel velocity
             Vx = -Vorb + Vearth*cos(inc_SSO);
             Vy = -Vearth*sin(inc_SSO);
-            obj.Vpixel = [Vx, Vy]/GSD;
+            obj.Vpixel = [Vx, Vy]/obj.GSD;
             % Best case blur time
             obj.Tblur = 1/max(abs(obj.Vpixel));
             % Outputs
@@ -496,13 +654,11 @@ classdef image_processing < handle
             end
 
             % Compute the saturation time
-            obj.Tsaturation = obj.sensor.full_well/obj.scenario.photon_flux;
+            obj.Tsaturation = obj.sensor.full_well/obj.scenario.electron_rate;
             Tsat = obj.Tsaturation;
         end
-    end
 
-    methods (Static)
-        function export_results(name,output)
+        function export_results(obj,name,output)
             % EXPORT_RESULTS Saves the specified output data to .mat and
             % .json files with a timestamped filename.
             %
@@ -513,6 +669,7 @@ classdef image_processing < handle
             %     any
 
             arguments (Input)
+                obj
                 name
                 output
             end
@@ -520,8 +677,7 @@ classdef image_processing < handle
             % Define path
             timestamp = string(datetime('now','Format','uuuu-MM-dd_HH-mm-ss'));
             filename = timestamp + "_" + name;
-            current_dir = fileparts(mfilename("fullpath"));
-            savedir = fullfile(current_dir,"..","..","..","IM_results");
+            savedir = fullfile(obj.base_dir,"IM_results");
             mkdir(savedir)
             savepath = fullfile(savedir,filename);
 
@@ -534,6 +690,25 @@ classdef image_processing < handle
             end
             fwrite(fid, jsonStr, 'char');
             fclose(fid);
+        end
+    end
+
+    methods (Access = private)
+        function py_init(obj)
+            % PY_INIT Initializes Python so it can be run from MATLAB.
+
+            % Load Python env if not loaded
+            if pyenv().Status == "NotLoaded"
+                envpath = fullfile(obj.base_dir,"env","Scripts","python.exe");
+                pyenv("Version",envpath);
+            end
+
+            radiative_transfer_path = fullfile(obj.base_dir,"src","analysis","radiative_transfer");
+
+            % Add module path
+            if ~any(string(py.sys.path) == radiative_transfer_path)
+                insert(py.sys.path, int32(0), radiative_transfer_path);
+            end
         end
     end
 end
