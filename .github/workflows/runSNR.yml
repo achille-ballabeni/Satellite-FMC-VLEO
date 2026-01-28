@@ -36,6 +36,16 @@ on:
         - 'GMAX3265'
         - 'CIS2521'
         - 'VITA1300'
+      latitude:
+        description: 'Set latitude for 6SV radiative model simulation'
+        required: false
+        default: 45
+        type: number
+      beta:
+        description: 'Set beta angle for 6SV radiative model simulation'
+        required: false
+        default: 22.5
+        type: number
 
 jobs:
   run-SNR-analysis:
@@ -70,17 +80,31 @@ jobs:
         uses: matlab-actions/run-command@v2
         with:
           command: |
+            % Open project
             proj = openProject(pwd);
+
+            % Set up image processing object with payload inputs
             optics = "${{ github.event.inputs.optics || 'TriScape100' }}";
             sensor = "${{ github.event.inputs.sensor || 'CMV12000' }}";
             im = image_processing("optics", optics, "sensor", sensor);
+
+            % Load images
             im.load_images();
+
+            % Set scenario parameters with geometry inputs
+            latitude = str2double("${{ github.event.inputs.latitude || 45 }}");
+            beta = str2double("${{ github.event.inputs.beta || 22.5 }}");
+            im.set_scenario("latitude", latitude, "beta_angle", beta);
+
+            % Determine exposure times based on input
             exposure_input = "${{ github.event.inputs.exposure_times || 'false' }}";
             if strcmp(exposure_input, 'true')
                 exposure = linspace(im.Tblur, im.Tsaturation, 10);
             else
                 exposure = 0.9*im.Tsaturation;
             end
+
+            % Run SNR simulations with and without blur and noise
             im.runSNR("blur", true, "noise", true, "exposures", exposure);
             im.runSNR("blur", false, "noise", true, "exposures", exposure);
 
