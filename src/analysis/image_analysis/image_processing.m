@@ -141,7 +141,7 @@ classdef image_processing < handle
             % Input Arguments
             %   obj - Object whose scenario parameters will be configured.
             %     object
-            %   options.altitude - Scenario altitude value.
+            %   options.altitude - Scenario altitude value in meters.
             %     scalar double, default 250000
             %   options.month - Month to use for the 6SV simulation.
             %     scalar double, default 1
@@ -534,7 +534,7 @@ classdef image_processing < handle
                 options.latitudes (1,:) double = 45
                 options.beta (1,:) double = 22.5
                 options.saturation (1,1) logical = false
-                options.altitude (1,1) double = 250
+                options.altitude (1,1) double = 250000
             end
 
             % Number of beta/latitude simulations
