@@ -11,6 +11,7 @@ classdef image_processing < handle
         Tblur % Maximum exposure time before blur
         Tsaturation % Maximum exposure time before saturation
         Tpiezo % Maximum exposure time before saturation of piezo travel
+        required_travel % Required travel to satisfy saturation time requirement
         base_dir % Root directory of project
         GSD % Ground Sampling Distance
 
@@ -635,6 +636,7 @@ classdef image_processing < handle
             obj.Tblur = 1/max(abs(obj.Vpixel));
             % Time for piezo travel saturation
             obj.Tpiezo = (100*10^-6/obj.sensor.px)/max(abs(obj.Vpixel));
+            obj.required_travel = obj.Tsaturation*max(abs(obj.Vpixel))*obj.sensor.px;
             % Outputs
             Vpx = obj.Vpixel;
             Tb = obj.Tblur;
