@@ -9,6 +9,7 @@ classdef satellite_simulation < handle
 
     properties
         orbital_parameters % Initial orbital parameters [a,e,i,raan,aop,ta]
+        sso % Flag for Sun-synchronous orbit constaint
         initial_attitude % Initial attitude-defining quaternion
         initial_angular_velocity % Initial angular velocity vector (ECI frame) [rad/s]
         startTime % Start time of the simulation [datetime]
@@ -20,28 +21,32 @@ classdef satellite_simulation < handle
     end
 
     methods
-        function obj = satellite_simulation(orbital_parameters, attitude, angular_velocity, startTime)
+        function obj = satellite_simulation(orbital_parameters, sso, attitude, angular_velocity, startTime)
             % SATELLITE Initialize the satellite class with initial
             % conditions.
             %
             % Input Arguments
             %   orbital_parameters - Orbital parameters [semimajor-axis, eccentricity, inclination, right ascension, arguement of pericenter, true anomaly] in meters and degrees.
             %     6-by-1 array
+            %   sso - Constrain to Sun-synchronous-orbit.
+            %     logical
             %   attitude - Quaternion obtained from a XYZ rotation wrt to the ECI frame.
             %     4-by-1 array
-            %   angular_velocity - Initial angular velocity vector in deg/s (ECI frame).
+            %   angular_velocity - Initial angular velocity vector in rad/s (ECI frame).
             %     3-by-1 array
             %   startTime - Start time of the simulation.
             %     datetime
 
             arguments
                 orbital_parameters (6,1) double
+                sso (1,1) logical
                 attitude (4,1) double
                 angular_velocity (3,1) double
                 startTime (1,1) datetime
             end
 
             obj.orbital_parameters = orbital_parameters;
+            obj.sso = sso;
             obj.initial_attitude = attitude;
             obj.initial_angular_velocity = angular_velocity;
             obj.startTime = startTime;
@@ -84,6 +89,7 @@ classdef satellite_simulation < handle
             params = model_parameters( ...
                 options.timestep, ...
                 obj.orbital_parameters, ...
+                obj.sso, ...
                 obj.initial_attitude, ...
                 obj.initial_angular_velocity, ...
                 obj.startTime, ...

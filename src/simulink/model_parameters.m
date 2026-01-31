@@ -1,4 +1,4 @@
-function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime,ID)
+function p = model_parameters(timeStep,op,sso,attitude,angular_velocity,startTime,ID)
     % MODEL_PARAMETERS Initializes spacecraft and simulation parameters.
     %
     % p = model_parameters(timeStep, op, attitude, angular_velocity, startTime)
@@ -8,6 +8,8 @@ function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime,ID
     %     scalar
     %   op - Orbital parameters [sma, ecc, inc, RAAN, aop, truean]
     %     6-by-1 array
+    %   sso - Flag to contrain to SSO orbit
+    %     logical
     %   attitude - Initial quaternion [q1 q2 q3 q4]
     %     4-by-1 array
     %   angular_velocity - Initial angular velocity [rad/s]
@@ -45,14 +47,21 @@ function p = model_parameters(timeStep,op,attitude,angular_velocity,startTime,ID
     p.R_E        = 6378*1000;
     p.sma        = op(1);
     p.ecc        = op(2);
-    p.inc_SSO    = acosd(-2/3*p.dOmega_dt/p.J2*(p.sma/p.R_E)^2*sqrt(p.sma^3/p.mu_E)); %TODO: where should I move this calculation?
+    
+    % SSO inclination
+    if sso
+        p.inc_SSO    = acosd(-2/3*p.dOmega_dt/p.J2*(p.sma/p.R_E)^2*sqrt(p.sma^3/p.mu_E));
+    else
+        p.inc_SSO = op(3);
+    end
+
     p.RAAN       = op(4);
     p.aop        = op(5);
     p.truean     = op(6);
     p.orbPeriod  = period(p.sma,p.mu_E);
     p.meanMotion = sqrt(p.mu_E/p.sma^3);
     p.H          = p.sma-p.R_E;
-    
+
     %% Epoch
     p.yearValue   = startTime.Year;
     p.monthValue  = startTime.Month;
