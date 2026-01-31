@@ -10,6 +10,8 @@ classdef image_processing < handle
         Vpixel % Pixel velocity
         Tblur % Maximum exposure time before blur
         Tsaturation % Maximum exposure time before saturation
+        Tpiezo % Maximum exposure time before saturation of piezo travel
+        required_travel % Required travel to satisfy saturation time requirement
         base_dir % Root directory of project
         GSD % Ground Sampling Distance
 
@@ -141,7 +143,7 @@ classdef image_processing < handle
             % Input Arguments
             %   obj - Object whose scenario parameters will be configured.
             %     object
-            %   options.altitude - Scenario altitude value.
+            %   options.altitude - Scenario altitude value in meters.
             %     scalar double, default 250000
             %   options.month - Month to use for the 6SV simulation.
             %     scalar double, default 1
@@ -534,7 +536,7 @@ classdef image_processing < handle
                 options.latitudes (1,:) double = 45
                 options.beta (1,:) double = 22.5
                 options.saturation (1,1) logical = false
-                options.altitude (1,1) double = 250
+                options.altitude (1,1) double = 250000
             end
 
             % Number of beta/latitude simulations
@@ -632,6 +634,9 @@ classdef image_processing < handle
             obj.Vpixel = [Vx, Vy]/obj.GSD;
             % Best case blur time
             obj.Tblur = 1/max(abs(obj.Vpixel));
+            % Time for piezo travel saturation
+            obj.Tpiezo = (100*10^-6/obj.sensor.px)/max(abs(obj.Vpixel));
+            obj.required_travel = obj.Tsaturation*max(abs(obj.Vpixel))*obj.sensor.px;
             % Outputs
             Vpx = obj.Vpixel;
             Tb = obj.Tblur;
