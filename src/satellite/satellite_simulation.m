@@ -169,8 +169,8 @@ classdef satellite_simulation < handle
             % folder.
             %
             % Input Arguments
-            %   destination - Path to the folder where simulation data is
-            %       saved.
+            %   destination_folder - Path to the root folder where
+            %       simulation data is saved.
             %     string
             %
             % Output Arguments
@@ -180,11 +180,20 @@ classdef satellite_simulation < handle
 
             arguments
                 obj
-                options.destination (1,1) string = "..\results"
+                options.destination_folder (1,1) string = ""
             end
             
             timestamp = string(datetime('now','Format','uuuu-MM-dd_HH-mm-ss'));
-            batch_folder = fullfile(options.destination,timestamp);
+            
+            % Set root folder
+            if options.destination_folder == ""
+                path = fullfile(matlab.project.currentProject().RootFolder,"SIM_results");
+            else
+                path = options.destination_folder;
+            end
+            
+            % Batch folder path
+            batch_folder = fullfile(path,timestamp);
             mkdir(batch_folder);
             results_file = fullfile(batch_folder,"simout.mat");
             results = obj.results;
