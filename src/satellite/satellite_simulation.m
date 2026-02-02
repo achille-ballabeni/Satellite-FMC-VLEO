@@ -179,6 +179,8 @@ classdef satellite_simulation < handle
             end
 
             timestamp = string(datetime('now','Format','uuuu-MM-dd_HH-mm-ss'));
+            Nsim = string(length(obj.results)) + "sim";
+            dir_name = timestamp + "_" + Nsim;
 
             % Set root folder
             if options.destination_folder == ""
@@ -188,7 +190,7 @@ classdef satellite_simulation < handle
             end
 
             % Batch folder path
-            batch_folder = fullfile(path,timestamp);
+            batch_folder = fullfile(path,dir_name);
             mkdir(batch_folder);
             results_file = fullfile(batch_folder,"simout.mat");
             results = obj.results;
