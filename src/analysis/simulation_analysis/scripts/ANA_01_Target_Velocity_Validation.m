@@ -25,7 +25,7 @@ fig1 = figure("Name","Velocity components vs Time",'Units','centimeters','Positi
 
 fig2 = figure("Name","Analytic vs Numerical Derivatives - Relative Errors",'Units','centimeters','Position',[0 0 18 18]);
 
-colors = lines(options.simulations);
+colors = lines(max(options.simulations));
 
 for k = options.simulations
     Re = data(k).Re;
@@ -66,7 +66,7 @@ for k = options.simulations
     Vtar = target_velocity(rho,LOS_hat,Rsat,Vsat,Wsat_eci);
 
     % Find numerical derivative
-    [Vtar_numerical,t_der,idx] = derivative(Rtar,t,method="edgepoint");
+    [Vtar_numerical,t_der,idx] = derivative(Rtar,t,method="secant");
 
     % Calculate the relative error
     Vtar_RE = abs(Vtar(idx,:) - Vtar_numerical)./vecnorm(Vtar(idx,:),2,2);
