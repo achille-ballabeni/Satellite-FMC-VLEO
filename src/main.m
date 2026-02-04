@@ -20,7 +20,7 @@ orb2body = angle2quat(deg2rad(270),0,deg2rad(90),"ZYX");
 initial_attitude = quatmultiply(eci2orb,orb2body);
 
 %% Run simulation
-timestep = 1;
+timestep = 0.1;
 duration = 10;
 cubesat = satellite_simulation();
 cubesat.set_model_parameters(op, ...
@@ -35,5 +35,5 @@ cubesat.simulate();
 batch_path = cubesat.export_results();
 
 %% Perform Analysis
-% analysis = analysis_tool("batchPath",batch_path);
-% analysis.runAllAnalyses()
+analysis = analysis_tool("batchPath",batch_path);
+analysis.runAllAnalyses()
