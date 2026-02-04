@@ -18,7 +18,7 @@ function [y,tout,idx] = derivative(x,t,options)
 %     n-by-m array
 %   t - The timestamps.
 %     n-by-1 array
-%   method - "standard", "midpoint", "edgepoint". Defaults to "standard".
+%   method - "standard", "midpoint", "secant". Defaults to "standard".
 %     string
 %
 % Output Arguments
@@ -51,11 +51,9 @@ elseif options.method == "edgepoint"
     tout = t(2:end-1); % Reassign time vector
     idx = 2:size(y,1)+1;
 
-elseif options.method == "midpoint"
-    t_der = t(1:2:end); % Time vector skipping intermediate point
-    x = x(1:2:end,:); % Value vector skipping intermediate point
-    y = diff(x,1,1)./diff(t_der); % Compute the derivative
-    tout = t(2:2:end-1); % Reassign time vector
-    idx = 2:2:size(t,1)-1;
+elseif options.method == "secant"
+    idx = 2:size(x,1)-1;
+    y = (x(3:end,:)-x(1:end-2,:)) ./ (t(3:end)-t(1:end-2));
+    tout = t(2:end-1); % Reassign time vector
 end
 end

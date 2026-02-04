@@ -1,7 +1,7 @@
 function ANA_01_Target_Velocity_Validation(options)
 
 % ANA_01_TARGET_VELOCITY_VALIDATION This script compares the Target
-% Velocity obtained from the analytical formulation with the one computed
+% Velocity obtained from the analytic formulation with the one computed
 % numerically.
 
 arguments (Input)
@@ -21,11 +21,11 @@ end
 
 %%%%%% PARAMETER INITIALIZATION and PRE-PROCESSING %%%%%%%%%%%%%%%%%%%%%%%%
 % Create figures outside the loop
-fig1 = figure("Name","Velocity components vs Time");
+fig1 = figure("Name","Velocity components vs Time",'Units','centimeters','Position',[0 0 18 18]);
 
-fig2 = figure("Name","Analytic vs Numerical Derivatives - Relative Errors");
+fig2 = figure("Name","Analytic vs Numerical Derivatives - Relative Errors",'Units','centimeters','Position',[0 0 18 18]);
 
-colors = lines(length(options.simulations));
+colors = lines(max(options.simulations));
 
 for k = options.simulations
     Re = data(k).Re;
@@ -66,10 +66,10 @@ for k = options.simulations
     Vtar = target_velocity(rho,LOS_hat,Rsat,Vsat,Wsat_eci);
 
     % Find numerical derivative
-    [Vtar_numerical,t_der,idx] = derivative(Rtar,t,method="edgepoint");
+    [Vtar_numerical,t_der,idx] = derivative(Rtar,t,method="secant");
 
     % Calculate the relative error
-    Vtar_diff = abs(Vtar(idx,:) - Vtar_numerical)./Vtar(idx,:);
+    Vtar_RE = abs(Vtar(idx,:) - Vtar_numerical)./vecnorm(Vtar(idx,:),2,2);
 
     %%%%%% PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Compare velocities
@@ -98,17 +98,17 @@ for k = options.simulations
 
     % Subplot 1: Difference in u component
     subplot(3,1,1)
-    plot(t_der,Vtar_diff(:,1),"x","LineWidth",1.5)
+    plot(t_der,Vtar_RE(:,1),"x","LineWidth",1)
     hold on
 
     % Subplot 2: Difference in v component
     subplot(3,1,2)
-    plot(t_der,Vtar_diff(:,2),"x","LineWidth",1.5)
+    plot(t_der,Vtar_RE(:,2),"x","LineWidth",1)
     hold on
 
     % Subplot 3: Difference in w component
     subplot(3,1,3)
-    plot(t_der,Vtar_diff(:,3),"x","LineWidth",1.5)
+    plot(t_der,Vtar_RE(:,3),"x","LineWidth",1)
     hold on
 end
 
@@ -118,52 +118,43 @@ figure(fig1)
 subplot(3,1,1)
 p1 = plot(nan, nan,'Color','k','LineStyle','-');
 p2 = plot(nan, nan,'x','Color','k','LineWidth',1.5);
-legend([p1,p2],{"Analytical","Numerical"});
-xlabel("Time [s]")
-ylabel("Velocity [m/s]")
-title("U component")
+legend([p1,p2],{"Analytic","Numerical"},'FontSize', 11, 'FontWeight', 'bold');
+xlabel("Time [s]",'FontSize', 13, 'FontWeight', 'bold')
+ylabel("u [m/s]",'FontSize', 13, 'FontWeight', 'bold')
 grid on
 
 subplot(3,1,2)
-xlabel("Time [s]")
-ylabel("Velocity [m/s]")
-title("V component")
+xlabel("Time [s]",'FontSize', 13, 'FontWeight', 'bold')
+ylabel("v [m/s]",'FontSize', 13, 'FontWeight', 'bold')
 grid on
 
 subplot(3,1,3)
-xlabel("Time [s]")
-ylabel("Velocity [m/s]")
-title("W component")
+xlabel("Time [s]",'FontSize', 13, 'FontWeight', 'bold')
+ylabel("w [m/s]",'FontSize', 13, 'FontWeight', 'bold')
 grid on
 
-sgtitle("Analytic vs Numerical Derivatives - Velocity Components")
+sgtitle("Analytic vs Numerical V_{im} | Velocity Components",'FontSize', 15, 'FontWeight', 'bold')
 savefig(script_name+"_VelocityComponents")
 
 % Finalize figure 2
 figure(fig2)
 
 subplot(3,1,1)
-plot(t_der,zeros(size(Vtar_diff(:,1))), 'r--','HandleVisibility','off') % Reference line at zero
-title('Relative error - u component')
-xlabel('Time [s]')
-ylabel('Relative error')
+xlabel('Time [s]','FontSize', 13)
+ylabel('$\displaystyle\frac{|u_{AN} - u_{NUM}|}{\|\overline{V}_{im,NUM}\|}$','Interpreter','latex','FontSize',15)
 grid on
 
 subplot(3,1,2)
-plot(t_der,zeros(size(Vtar_diff(:,2))), 'r--','HandleVisibility','off') % Reference line at zero
-title('Relative error - v component')
-xlabel('Time [s]')
-ylabel('Relative error')
+xlabel('Time [s]','FontSize', 13)
+ylabel('$\displaystyle\frac{|v_{AN} - v_{NUM}|}{\|\overline{V}_{im,NUM}\|}$','Interpreter','latex','FontSize',15)
 grid on
 
 subplot(3,1,3)
-plot(t_der,zeros(size(Vtar_diff(:,3))), 'r--','HandleVisibility','off') % Reference line at zero
-title('Relative error - w component')
-xlabel('Time [s]')
-ylabel('Relative error')
+xlabel('Time [s]','FontSize', 13)
+ylabel('$\displaystyle\frac{|w_{AN} - w_{NUM}|}{\|\overline{V}_{im,NUM}\|}$','Interpreter','latex','FontSize',15)
 grid on
 
-sgtitle("Analytic vs Numerical Derivatives - Relative Errors")
+sgtitle("Analytic vs Numerical V_{im} | Relative Error",'FontSize', 15, 'FontWeight', 'bold')
 savefig(script_name+"_VelocityRelativeErrors")
 
 end
