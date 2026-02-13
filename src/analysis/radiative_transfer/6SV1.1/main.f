@@ -242,6 +242,7 @@ c****************************************************************************c
         real sodaerp,sodtotp,tdir,tdif,etn,esn,es,ea0n,ea0,ee0n
         real ee0,tmdir,tmdif,xla0n,xla0,xltn,xlt,xlen,xle,pizera
         real fophst,pizerr,pizert,xrad,xa,xb,xc
+        real hc, wl_meters, watt2photon
         integer nt,mu,mu2,np,k,iwr,mum1,idatmp,ipol
         integer j,iread,l,igeom,month,jday,nc,nl,idatm,iaer,iaerp,n
         integer iwave,iinf,isup,ik,i,inhomo,idirec,ibrdf,igroun
@@ -2803,9 +2804,22 @@ c
 c
         call solirr(wl,
      s            swl)
-        swl=swl*dsol
-        coef=sbor*step*swl
-        coefp=sbor*step
+        swl = swl * dsol
+
+        ! Photon conversion: convert spectral energy (W/m2/um) to photon
+        ! rate (photons/m2/s/um) using factor lambda/(h*c). wl is in
+        ! micrometers in this code.
+        wl_meters = wl * 1.0e-6
+        ! h*c in J*m (Planck constant * speed of light)
+        hc = 1.98644568e-25 
+        watt2photon = wl_meters / hc
+
+        ! replace energy-weighted solar irradiance with photon-weighted
+        ! irradiance
+        swl = swl * watt2photon
+
+        coef = sbor * step * swl
+        coefp = sbor * step
         call interp(iaer,idatmp,wl,taer55,taer55p,xmud,romix,
      s   rorayl,roaero,phaa,phar,rqmix,rqrayl,rqaero,qhaa,qhar,
      s   rumix,rurayl,ruaero,uhaa,uhar,
@@ -3688,8 +3702,8 @@ c pressure at ground level (174) and altitude (175)
      s       1h*,24x,27h integrated values of  :   ,t79,1h*,/,
      s       1h*,24x,27h --------------------      ,t79,1h*,/,
      s       1h*,t79,1h*,/,
-     s       1h*,6x,22h app. polarized refl. ,f7.4,3x,
-     s       30h app. pol. rad. (w/m2/sr/mic) ,f8.3,
+     s       1h*,1x,22h app. polarized refl. ,f7.4,3x,
+     s       30h app. pol. rad. (w/m2/sr/mic) ,E12.5,
      s       1x,t79,1h*,/,
      s       1h*,12x,39h direction of the plane of polarization,
      s       f6.2,t79,1h*,/,
@@ -3699,8 +3713,8 @@ c pressure at ground level (174) and altitude (175)
      s       1h*,24x,27h integrated values of  :   ,t79,1h*,/,
      s       1h*,24x,27h --------------------      ,t79,1h*,/,
      s       1h*,t79,1h*,/,
-     s       1h*,6x,22h apparent reflectance ,f10.7,1x,
-     s                 26h appar. rad.(w/m2/sr/mic) ,f8.3,1x,t79,1h*,/,
+     s       1h*,2x,22h apparent reflectance ,f10.7,1x,
+     s                 26h appar. rad.(w/m2/sr/mic) ,E13.6,1x,t79,1h*,/,
      s       1h*,18x,30h total gaseous transmittance  ,f5.3,
      s  t79,1h*,/,1h*,t79,1h*,/,79(1h*))
   500 format(1h*,6x,40h water reflectance components:           ,
@@ -3731,19 +3745,19 @@ c pressure at ground level (174) and altitude (175)
      s/,1h*,30x,f10.3,t79,1h*,/,1h*,t79,1h*,/,79(1h*))
   437 format(1h*,t79,1h*,/,1h*,10x,29hint. funct filter (in mic)
      s               ,10x,26h int. sol. spect (in w/m2),t79,1h*,/,
-     s1h*,10x,f12.7,30x,f10.3,t79,1h*,/,1h*,t79,1h*,/,79(1h*))
+     s1h*,10x,f12.7,30x,E15.6,t79,1h*,/,1h*,t79,1h*,/,79(1h*))
   434 format(1h*,24x,24h int. absolute values of,t79,
      s 1h*,/,1h*,24x,24h -----------------------               ,
      s  t79,1h*,/,1h*,22x,33hirr. at ground level (w/m2/mic)  ,
      s  t79,1h*,/,1h*, 5x,17hdirect solar irr.,
      s             4x,17hatm. diffuse irr.,
      s             4x,17henvironment  irr ,t79,1h*,/,
-     s             1h*,3(10x,f10.3),t79,1h*,/,
+     s             1h*,6x,E13.6,8x,E13.6,8x,E13.6,t79,1h*,/,
      s        1h*,22x,33hrad at satel. level (w/m2/sr/mic),t79,1h*,/,
      s                1h*,5x,17hatm. intrin. rad.,
      s                    4x,a11,5h rad.,
      s                    4x,a6,9h radiance,t79,1h*,/,
-     s             1h*,3(10x,f10.3),t79,1h*,/,1h*,t79,1h*)
+     s             1h*,6x,E13.6,7x,E13.6,7x,E13.6,t79,1h*,/,1h*,t79,1h*)
   929 format(1h ,////)
   930 format(79(1h*),/,1h*,t79,1h*,/,
      s       1h*,t27,27h integrated values of  :   ,t79,1h*,/,
