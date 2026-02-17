@@ -640,7 +640,7 @@ classdef image_processing < handle
             J2 = 1.082635854e-3;
             sma = Re+obj.scenario.altitude;
             inc_SSO = acos(-2/3*dOmega_dt/J2*(sma/Re)^2*sqrt(sma^3/mi)); %TODO: where should I move this calculation?
-            Vearth = We*Re*cosd(obj.scenario.latitude);
+            Vearth = We*Re;
             % Ground sampling distance
             obj.GSD = gsd(obj.sensor.px,obj.optics.f,obj.scenario.altitude);
             % Orbital velocity
