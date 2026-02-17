@@ -31,7 +31,7 @@ classdef satellite_simulation < handle
             %     logical
             %   attitude - Quaternion obtained from a XYZ rotation wrt to the ECI frame.
             %     4-by-1 array
-            %   angular_velocity - Initial angular velocity vector in rad/s (ECI frame).
+            %   angular_velocity - Initial angular velocity vector in rad/s (body frame).
             %     3-by-1 array
             %   startTime - Start time of the simulation.
             %     datetime
