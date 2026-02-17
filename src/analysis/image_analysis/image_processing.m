@@ -1,23 +1,23 @@
 classdef image_processing < handle
 
     properties
-        images % Image database
-        imgFiles % Image filelist
-        nImages % Number of images
-        sensor % Imaging sensor selection
-        scenario % Orbital scenario
-        optics % Imaging payload optics
-        Vpixel % Pixel velocity
-        Tblur % Maximum exposure time before blur
-        Tsaturation % Maximum exposure time before saturation
-        Tpiezo % Maximum exposure time before saturation of piezo travel
+        images          % Image database
+        imgFiles        % Image filelist
+        nImages         % Number of images
+        sensor          % Imaging sensor selection
+        scenario        % Orbital scenario
+        optics          % Imaging payload optics
+        Vpixel          % Pixel velocity
+        Tblur           % Maximum exposure time before blur
+        Tsaturation     % Maximum exposure time before saturation
+        Tpiezo          % Maximum exposure time before saturation of piezo travel
         required_travel % Required travel to satisfy saturation time requirement
-        base_dir % Root directory of project
-        GSD % Ground Sampling Distance
+        base_dir        % Root directory of project
+        GSD             % Ground Sampling Distance
 
-        OFout % Output results for optical flow analysis
-        SNRout % Output results for SNR analysis
-        GEOout % Output results for geometrical analysis
+        OFout       % Output results for optical flow analysis
+        SNRout      % Output results for SNR analysis
+        GEOout      % Output results for geometrical analysis
         export_path % Export path of the analysis
     end
 
@@ -447,6 +447,7 @@ classdef image_processing < handle
                 options.exposures (1,:) double = obj.Tsaturation*0.9
                 options.blur (1,1) double = false
                 options.noise (1,1) double = false
+                options.electron_rate (1,:) double = false
             end
 
             % Validate blur and noise
@@ -455,6 +456,13 @@ classdef image_processing < handle
             end
 
             n = length(options.exposures);
+
+            % Fix electron rate if constant value is required
+            if options.electron_rate == false
+                options.electron_rate = obj.scenario.electron_rate*ones(1,n);
+            elseif n ~= length(options.electron_rate)
+                error("The electron rate vecor must be the same size of the exposure times.")
+            end
 
             % Initialize output variables
             obj.SNRout = struct( ...
@@ -477,6 +485,7 @@ classdef image_processing < handle
 
             for i = 1:n
                 time = options.exposures(i);
+                electron_rate = options.electron_rate(i);
 
                 % Compute pixel shift and blur time
                 Vpx = obj.Vpixel;
@@ -496,12 +505,12 @@ classdef image_processing < handle
 
                     % Add noise
                     if options.noise
-                        [image, ~] = shot_noise(image,time,obj.scenario.electron_rate,obj.sensor.full_well,obj.sensor.gain);
+                        [image, ~] = shot_noise(image,time,electron_rate,obj.sensor.full_well,obj.sensor.gain);
                         % TODO: improve computations. This is already
                         % computed inside shot noise. Maybe make a class to
                         % contain all methods related to the image
                         % processing.
-                        ref = obj.scenario.electron_rate*time*double(ref)./255*obj.sensor.gain;
+                        ref = electron_rate*time*double(ref)./255*obj.sensor.gain;
                     end
 
                     % Compute SNR
