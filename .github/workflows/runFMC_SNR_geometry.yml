@@ -1,0 +1,35 @@
+name: FMC-SNR-geometry-Analysis
+on:
+  workflow_dispatch:
+    inputs:
+      optics:
+        description: 'Choose optics for the simulation'
+        required: true
+        default: 'TriScape100'
+        type: choice
+        options:
+        - 'TriScape100'
+        - 'TriScape200'
+        - 'SkySat'
+        - 'simulator'
+        - '2m@250'
+        - '1.5m@250'
+        - '1m@250'
+        - '0.5m@250'
+      sensor:
+        description: 'Choose sensor for the simulation'
+        required: true
+        default: 'CMV12000'
+        type: choice
+        options:
+        - 'CMV12000'
+        - 'IMX249'
+        - 'GMAX3265'
+        - 'CIS2521'
+        - 'VITA1300'
+
+jobs:
+  run-GEO-analysis:
+    name: Setup MATLAB and run GEO analysis
+    runs-on: windows-latest
+    steps: []
