@@ -18,6 +18,7 @@ classdef image_processing < handle
         OFout % Output results for optical flow analysis
         SNRout % Output results for SNR analysis
         GEOout % Output results for geometrical analysis
+        export_path % Export path of the analysis
     end
 
     methods
@@ -701,6 +702,9 @@ classdef image_processing < handle
             savedir = fullfile(obj.base_dir,"IM_results");
             mkdir(savedir)
             savepath = fullfile(savedir,filename);
+
+            % Save path to object
+            obj.export_path = savepath;
 
             % Export results as .mat and .json
             save(savepath,"output")
