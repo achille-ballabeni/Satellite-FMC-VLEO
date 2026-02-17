@@ -50,7 +50,7 @@ function p = model_parameters(timeStep,op,sso,attitude,angular_velocity,startTim
     
     % SSO inclination
     if sso
-        p.inc_SSO    = acosd(-2/3*p.dOmega_dt/p.J2*(p.sma/p.R_E)^2*sqrt(p.sma^3/p.mu_E));
+        p.inc_SSO = acosd(-2/3*p.dOmega_dt/p.J2*(p.sma/p.R_E)^2*sqrt(p.sma^3/p.mu_E));
     else
         p.inc_SSO = op(3);
     end

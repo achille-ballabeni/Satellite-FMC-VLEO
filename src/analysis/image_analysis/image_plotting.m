@@ -369,7 +369,6 @@ classdef image_plotting < handle
                 ticks = [ticks, (1:9)*10^d];
             end
             ticks = ticks(ticks <= ceil(Tsat_max/10)*10);
-            ticks = [ticks,150];
 
             yyaxis left
             set(gca,'YScale','log','YMinorTick','off')

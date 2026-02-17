@@ -1,23 +1,24 @@
 classdef image_processing < handle
 
     properties
-        images % Image database
-        imgFiles % Image filelist
-        nImages % Number of images
-        sensor % Imaging sensor selection
-        scenario % Orbital scenario
-        optics % Imaging payload optics
-        Vpixel % Pixel velocity
-        Tblur % Maximum exposure time before blur
-        Tsaturation % Maximum exposure time before saturation
-        Tpiezo % Maximum exposure time before saturation of piezo travel
+        images          % Image database
+        imgFiles        % Image filelist
+        nImages         % Number of images
+        sensor          % Imaging sensor selection
+        scenario        % Orbital scenario
+        optics          % Imaging payload optics
+        Vpixel          % Pixel velocity
+        Tblur           % Maximum exposure time before blur
+        Tsaturation     % Maximum exposure time before saturation
+        Tpiezo          % Maximum exposure time before saturation of piezo travel
         required_travel % Required travel to satisfy saturation time requirement
-        base_dir % Root directory of project
-        GSD % Ground Sampling Distance
+        base_dir        % Root directory of project
+        GSD             % Ground Sampling Distance
 
-        OFout % Output results for optical flow analysis
-        SNRout % Output results for SNR analysis
-        GEOout % Output results for geometrical analysis
+        OFout       % Output results for optical flow analysis
+        SNRout      % Output results for SNR analysis
+        GEOout      % Output results for geometrical analysis
+        export_path % Export path of the analysis
     end
 
     methods
@@ -33,6 +34,14 @@ classdef image_processing < handle
             %     string, default "TriScape100"
             %   options.sensor - Name of the sensor to use.
             %     string, default "CMV12000"
+            %   options.altitude - Scenario altitude value in meters.
+            %     scalar double, default 250000
+            %   options.month - Month to use for the 6SV simulation.
+            %     scalar double, default 1
+            %   options.latitude - Latitude of the satellite.
+            %     scalar double, default 0
+            %   options.beta_angle - Sun-Earth-Satellite angle.
+            %     scalar double, default 1
             %
             % Output Arguments
             %   obj - Initialized image-processing object with loaded image
@@ -43,6 +52,10 @@ classdef image_processing < handle
                 options.db_path string = "default"
                 options.optics string = "TriScape100"
                 options.sensor string = "CMV12000"
+                options.altitude (1,1) double = 250000
+                options.month (1,1) double = 1
+                options.latitude (1,1) double = 0
+                options.beta_angle (1,1) double = 0
             end
 
             % Project root folder
@@ -70,7 +83,11 @@ classdef image_processing < handle
             % Initialize parameters
             obj.set_optics('optics',options.optics);
             obj.set_sensor('sensor',options.sensor);
-            obj.set_scenario();
+            obj.set_scenario( ...
+                "altitude",options.altitude, ...
+                "beta_angle",options.beta_angle, ...
+                "latitude",options.latitude, ...
+                "month",options.month);
         end
 
         function load_images(obj)
@@ -430,6 +447,7 @@ classdef image_processing < handle
                 options.exposures (1,:) double = obj.Tsaturation*0.9
                 options.blur (1,1) double = false
                 options.noise (1,1) double = false
+                options.electron_rate (1,:) double = false
             end
 
             % Validate blur and noise
@@ -438,6 +456,13 @@ classdef image_processing < handle
             end
 
             n = length(options.exposures);
+
+            % Fix electron rate if constant value is required
+            if options.electron_rate == false
+                options.electron_rate = obj.scenario.electron_rate*ones(1,n);
+            elseif n ~= length(options.electron_rate)
+                error("The electron rate vecor must be the same size of the exposure times.")
+            end
 
             % Initialize output variables
             obj.SNRout = struct( ...
@@ -460,6 +485,7 @@ classdef image_processing < handle
 
             for i = 1:n
                 time = options.exposures(i);
+                electron_rate = options.electron_rate(i);
 
                 % Compute pixel shift and blur time
                 Vpx = obj.Vpixel;
@@ -479,12 +505,12 @@ classdef image_processing < handle
 
                     % Add noise
                     if options.noise
-                        [image, ~] = shot_noise(image,time,obj.scenario.electron_rate,obj.sensor.full_well,obj.sensor.gain);
+                        [image, ~] = shot_noise(image,time,electron_rate,obj.sensor.full_well,obj.sensor.gain);
                         % TODO: improve computations. This is already
                         % computed inside shot noise. Maybe make a class to
                         % contain all methods related to the image
                         % processing.
-                        ref = obj.scenario.electron_rate*time*double(ref)./255*obj.sensor.gain;
+                        ref = electron_rate*time*double(ref)./255*obj.sensor.gain;
                     end
 
                     % Compute SNR
@@ -623,7 +649,7 @@ classdef image_processing < handle
             J2 = 1.082635854e-3;
             sma = Re+obj.scenario.altitude;
             inc_SSO = acos(-2/3*dOmega_dt/J2*(sma/Re)^2*sqrt(sma^3/mi)); %TODO: where should I move this calculation?
-            Vearth = We*Re*cosd(obj.scenario.latitude);
+            Vearth = We*Re;
             % Ground sampling distance
             obj.GSD = gsd(obj.sensor.px,obj.optics.f,obj.scenario.altitude);
             % Orbital velocity
@@ -685,6 +711,9 @@ classdef image_processing < handle
             savedir = fullfile(obj.base_dir,"IM_results");
             mkdir(savedir)
             savepath = fullfile(savedir,filename);
+
+            % Save path to object
+            obj.export_path = savepath;
 
             % Export results as .mat and .json
             save(savepath,"output")
