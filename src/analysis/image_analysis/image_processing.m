@@ -33,6 +33,14 @@ classdef image_processing < handle
             %     string, default "TriScape100"
             %   options.sensor - Name of the sensor to use.
             %     string, default "CMV12000"
+            %   options.altitude - Scenario altitude value in meters.
+            %     scalar double, default 250000
+            %   options.month - Month to use for the 6SV simulation.
+            %     scalar double, default 1
+            %   options.latitude - Latitude of the satellite.
+            %     scalar double, default 0
+            %   options.beta_angle - Sun-Earth-Satellite angle.
+            %     scalar double, default 1
             %
             % Output Arguments
             %   obj - Initialized image-processing object with loaded image
@@ -43,6 +51,10 @@ classdef image_processing < handle
                 options.db_path string = "default"
                 options.optics string = "TriScape100"
                 options.sensor string = "CMV12000"
+                options.altitude (1,1) double = 250000
+                options.month (1,1) double = 1
+                options.latitude (1,1) double = 0
+                options.beta_angle (1,1) double = 0
             end
 
             % Project root folder
@@ -70,7 +82,11 @@ classdef image_processing < handle
             % Initialize parameters
             obj.set_optics('optics',options.optics);
             obj.set_sensor('sensor',options.sensor);
-            obj.set_scenario();
+            obj.set_scenario( ...
+                "altitude",options.altitude, ...
+                "beta_angle",options.beta_angle, ...
+                "latitude",options.latitude, ...
+                "month",options.month);
         end
 
         function load_images(obj)
