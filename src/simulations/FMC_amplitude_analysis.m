@@ -39,11 +39,11 @@ colors = lines(n);
 
 figure('Name','All beta','Units','centimeters','Position',[0 0 18 12])
 hold on
-for i = 1:n
+for i = 1:2:n
     plot(latitudes, A(i,:), ...
         'LineWidth', 2, ...
         'Color', colors(i,:), ...
-        'DisplayName', sprintf('A β=%.2f°', betas(i)))
+        'DisplayName', sprintf('β=%.2f°', betas(i)))
     
 end
 xlabel('Latitude [deg]', 'FontSize', 13, 'FontWeight', 'bold')

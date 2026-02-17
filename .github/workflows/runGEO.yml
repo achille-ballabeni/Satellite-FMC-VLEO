@@ -1,0 +1,98 @@
+name: GEO-Analysis
+on:
+  workflow_dispatch:
+    inputs:
+      optics:
+        description: 'Choose optics for the simulation'
+        required: true
+        default: 'TriScape100'
+        type: choice
+        options:
+        - 'TriScape100'
+        - 'TriScape200'
+        - 'SkySat'
+        - 'simulator'
+        - '2m@250'
+        - '1.5m@250'
+        - '1m@250'
+        - '0.5m@250'
+      sensor:
+        description: 'Choose sensor for the simulation'
+        required: true
+        default: 'CMV12000'
+        type: choice
+        options:
+        - 'CMV12000'
+        - 'IMX249'
+        - 'GMAX3265'
+        - 'CIS2521'
+        - 'VITA1300'
+      num_betas:
+        description: 'Number of beta points'
+        required: false
+        default: 15
+        type: number
+      num_latitudes:
+        description: 'Number of latitude points'
+        required: false
+        default: 15
+        type: number
+
+jobs:
+  run-GEO-analysis:
+    name: Setup MATLAB and run GEO analysis
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v2
+        with:
+          release: R2025a
+          cache: true
+          products: >
+            Signal_Processing_Toolbox
+            Image_Processing_Toolbox
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m venv env
+          env\Scripts\python.exe -m pip install -r requirements.txt
+
+      - name: Run GEO analysis
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            % Open project
+            proj = openProject(pwd);
+
+            % Set up image processing object with payload inputs
+            optics = "${{ github.event.inputs.optics }}";
+            sensor = "${{ github.event.inputs.sensor }}";
+            im = image_processing("optics", optics, "sensor", sensor);
+
+            % Get number of betas and latitudes
+            num_betas = str2double("${{ github.event.inputs.num_betas }}");
+            num_latitudes = str2double("${{ github.event.inputs.num_latitudes }}");
+
+            % Create beta and latitude arrays
+            betas = linspace(0, 78.75, num_betas);
+            latitudes = linspace(0, 78.75, num_latitudes);
+
+            % Run geometry analysis
+            im.runGEOMETRY("beta", betas, "latitudes", latitudes);
+
+      - name: Upload GEO results
+        uses: actions/upload-artifact@v4
+        with:
+          name: geo-results
+          path: IM_results/
+          if-no-files-found: warn
