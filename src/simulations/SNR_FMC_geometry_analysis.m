@@ -97,7 +97,7 @@ xlabel('Target Exposure Time [ms]', 'FontSize', 13, 'FontWeight', 'bold')
 ylabel('SNR', 'FontSize', 13, 'FontWeight', 'bold')
 title(sprintf('%s | SNR | β = %.2f°', results.optics.name, beta(beta_idx)), ...
     'FontSize', 15, 'FontWeight', 'bold')
-legend('Location', 'southeast', 'FontSize', 12, 'Orientation', 'horizontal', 'NumColumns', 3)
+legend('Location', 'southeast', 'FontSize', 12, 'Orientation', 'horizontal', 'NumColumns', 2)
 grid on
 
 %%%%%% EXPORT PLOT AS FIG %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
