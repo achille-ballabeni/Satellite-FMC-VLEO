@@ -35,7 +35,7 @@ end
 
 %% Plot results
 n = length(betas);
-colors = lines(n);
+colors = cmap();
 
 figure('Name','All beta','Units','centimeters','Position',[0 0 18 12])
 hold on
