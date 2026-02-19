@@ -10,12 +10,7 @@ on:
         options:
         - 'TriScape100'
         - 'TriScape200'
-        - 'SkySat'
         - 'simulator'
-        - '2m@250'
-        - '1.5m@250'
-        - '1m@250'
-        - '0.5m@250'
       sensor:
         description: 'Choose sensor for the simulation'
         required: true
@@ -23,13 +18,55 @@ on:
         type: choice
         options:
         - 'CMV12000'
-        - 'IMX249'
         - 'GMAX3265'
-        - 'CIS2521'
         - 'VITA1300'
 
 jobs:
-  run-GEO-analysis:
-    name: Setup MATLAB and run GEO analysis
+  run-peak-SNR-analysis:
+    name: Setup MATLAB and run peak SNR analysis
     runs-on: windows-latest
-    steps: []
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v2
+        with:
+          release: R2025a
+          cache: true
+          products: >
+            Signal_Processing_Toolbox
+            Image_Processing_Toolbox
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m venv env
+          env\Scripts\python.exe -m pip install -r requirements.txt
+
+      - name: Run peak SNR analysis
+        uses: matlab-actions/run-command@v2
+        with:
+          command: |
+            % Open project
+            proj = openProject(pwd);
+
+            % Set inputs
+            optics = "${{ github.event.inputs.optics }}";
+            sensor = "${{ github.event.inputs.sensor }}";
+            
+            % Run geometry analysis
+            SNR_FMC_max_value_analysis(optics,sensor);
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: peak-snr-results
+          path: IM_results/
+          if-no-files-found: warn
