@@ -332,7 +332,7 @@ classdef image_plotting < handle
 
             % Initialize variables
             n = length(obj.results.beta);
-            colors = lines(n);
+            colors = cmap();
             
             % Plot mesh with saturation time
             figure('Name','Saturation Time Analysis','Units','centimeters','Position',[0 0 18 13])
