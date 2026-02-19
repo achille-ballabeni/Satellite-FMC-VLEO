@@ -1,8 +1,9 @@
-function SNR_FMC_max_value_analysis(optics,sensor)
+function SNR_FMC_max_value_analysis(optics,sensor,full_dataset)
 
 arguments
     optics = "TriScape100"
     sensor = "CMV12000"
+    full_dataset = "false"
 end
 
 %%%%%% LOAD RESULTS FROM LOOKUP TABLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -68,8 +69,12 @@ all_exposures = [plot_data.exposures];
 all_rates = [plot_data.new_erate];
 
 % Run SNR analysis
-path = fullfile(root_path,"src","media","single_image");
-im = image_processing("optics",results.optics.name,"sensor",results.sensor.name,"db_path",path);
+if full_dataset
+    im = image_processing("optics",results.optics.name,"sensor",results.sensor.name);
+else
+    path = fullfile(root_path,"src","media","single_image");
+    im = image_processing("optics",results.optics.name,"sensor",results.sensor.name,"db_path",path);
+end
 im.load_images();
 im.runSNR('exposures', all_exposures, 'noise', true, 'electron_rate', all_rates);
 

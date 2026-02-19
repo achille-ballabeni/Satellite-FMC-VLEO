@@ -20,6 +20,14 @@ on:
         - 'CMV12000'
         - 'GMAX3265'
         - 'VITA1300'
+      full_dataset:
+        description: 'Run SNR on full image dataset'
+        required: true
+        default: 'false'
+        type: choice
+        options:
+        - 'true'
+        - 'false'
 
 jobs:
   run-peak-SNR-analysis:
@@ -60,9 +68,10 @@ jobs:
             % Set inputs
             optics = "${{ github.event.inputs.optics }}";
             sensor = "${{ github.event.inputs.sensor }}";
+            full_dataset = strcmp("${{ github.event.inputs.full_dataset }}", "true");
             
             % Run geometry analysis
-            SNR_FMC_max_value_analysis(optics,sensor);
+            SNR_FMC_max_value_analysis(optics,sensor,full_dataset);
 
       - name: Upload results
         uses: actions/upload-artifact@v4
