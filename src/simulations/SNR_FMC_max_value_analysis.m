@@ -3,7 +3,7 @@ function SNR_FMC_max_value_analysis(optics,sensor,full_dataset)
 arguments
     optics = "TriScape100"
     sensor = "CMV12000"
-    full_dataset = "false"
+    full_dataset = false
 end
 
 %%%%%% LOAD RESULTS FROM LOOKUP TABLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
