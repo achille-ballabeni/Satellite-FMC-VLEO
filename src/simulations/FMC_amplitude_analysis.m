@@ -1,22 +1,16 @@
-clc, clear
-%% Run analysis for to find exposure and blur time for each beta
-%  Skip to the next section if there is already a result file
+function FMC_amplitude_analysis(optics,sensor)
 
-% Simulation settings
-betas = linspace(0,78.75,8);
-latitudes = linspace(0,78.75,15);
-sensor = "cmv12000";
-optics = "triscape100";
+arguments
+    optics = "TriScape100"
+    sensor = "CMV12000"
+end
 
-% Run simulation using the image_processing class
-im = image_processing("sensor",sensor,"optics",optics);
-im.runGEOMETRY("beta",betas,"latitudes",latitudes)
+%%%%%% LOAD RESULTS FROM LOOKUP TABLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+root_path = matlab.project.currentProject().RootFolder;
+lookup_dir = fullfile(root_path, "src", "analysis", "radiative_transfer", "lookups");
+results = load_mat_with_keywords(lookup_dir,optics,sensor).output;
 
-%% Load results of previous simulation
-[file, location] = uigetfile;
-results = load(fullfile(location,file)).output;
-
-%% Perform amplitude analysis
+%%%%%% PERFORM AMPLITUDE ANALYSIS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 piezo_range = 50e-6;
 betas = results.beta;
 latitudes = results.latitudes;
@@ -33,23 +27,23 @@ for i = 1:length(betas)
     end
 end
 
-%% Plot results
+%%%%%% PLOT RESULTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 n = length(betas);
-colors = lines(n);
+colors = cmap();
 
 figure('Name','All beta','Units','centimeters','Position',[0 0 18 12])
 hold on
-for i = 1:2:n
+for i = 1:n
     plot(latitudes, A(i,:), ...
         'LineWidth', 2, ...
         'Color', colors(i,:), ...
         'DisplayName', sprintf('β=%.2f°', betas(i)))
-    
+
 end
 xlabel('Latitude [deg]', 'FontSize', 13, 'FontWeight', 'bold')
 ylabel('Amplitude [\mum]', 'FontSize', 13, 'FontWeight', 'bold')
 title(results.optics.name + " | Amplitude vs Latitude", 'FontSize', 15, 'FontWeight', 'bold')
 legend('Location', 'northwest', 'FontSize', 12, 'Orientation', 'horizontal', 'NumColumns', 2)
 set(gca, 'YScale', 'log')
-yticklabels(["1","10","100","1000"])
 grid on
+end

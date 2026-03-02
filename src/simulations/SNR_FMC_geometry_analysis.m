@@ -1,87 +1,102 @@
-clc, clear;
-%% Run analysis for to find exposure and blur time for each beta
-%  Skip to the next section if there is already a result file
+function SNR_FMC_geometry_analysis(optics,sensor,full_dataset)
 
-% Simulation settings
-betas = linspace(0,78.75,8);
-latitudes = linspace(0,78.75,15);
-sensor = "cmv12000";
-optics = "triscape100";
+arguments
+    optics = "TriScape100"
+    sensor = "CMV12000"
+    full_dataset = false
+end
 
-% Run simulation using the image_processing class
-im = image_processing("sensor",sensor,"optics",optics);
-im.runGEOMETRY("beta",betas,"latitudes",latitudes)
+%%%%%% LOAD RESULTS FROM LOOKUP TABLES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+root_path = matlab.project.currentProject().RootFolder;
+lookup_dir = fullfile(root_path, "src", "analysis", "radiative_transfer", "lookups");
+results = load_mat_with_keywords(lookup_dir,optics,sensor).output;
 
-%% Load results of previous simulation
-[file, location] = uigetfile;
-results = load(fullfile(location,file)).output;
-
-%% Perform amplitude analysis
+%%%%%% SETUP ANALYSIS PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Select one beta angle
 beta_idx = 3;
+
 % Piezo travel for saturation
-piezo_range = 50e-6;
-lats = results.latitudes;
+piezo_range = 50e-6/results.sensor.px;
+% Using 2 step size because 8 latitudes are enough, the lookup table is
+% with 15 values
+lats = results.latitudes(1:2:end);
 beta = results.beta;
+Tblur = results.Tblur(beta_idx,1);
+Tsat = results.Tsaturation(beta_idx,1:2:end);
+electron_rate_ref = results.electron_rate(beta_idx,1:2:end);
 
-% Preallocate
-fmc_exposures = zeros(length(lats));
+% Find maximum saturation exposure time with FMC compensation
+u = 1/Tblur;
+fmc = piezo_compensation(u, piezo_range);
 
-% Loop through latitudes to get the max compensation time from fmc with
-% saturation
+% Preallocate FMC exposure times
+fmc_exposures = zeros(length(lats),1);
+
+% Loop through latitudes to compute maximum compensation time with saturation
 for k = 1:length(lats)
-    u = 1/results.Tblur(beta_idx,k);
-    fmc = piezo_compensation(u, piezo_range/results.sensor.px);
-    fmc.compute_compensated_motion(results.Tsaturation(beta_idx,k));
+    fmc.compute_compensated_motion(Tsat(k));
     fmc_exposures(k) = fmc.Texp_r;
 end
 
-%% Perform SNR analysis for the given beta angle, using the FMC exposure values
+%%%%%% PERFORM SNR ANALYSIS FOR GEOMETRY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Number of samples per latitude
 n_samples = 8:15;
+
 % Preallocate exposure and electron_rate vectors
 exposures = zeros(sum(n_samples), 1);
-exposures_nominal = zeros(sum(n_samples), 1);
 electron_rate = zeros(sum(n_samples), 1);
 
 % Create linspace vectors for each latitude
 for k = 1:length(lats)
+    n = n_samples(k);
     idx_start = sum(n_samples(1:k)) - sum(n_samples(k)) + 1;
     idx_end = sum(n_samples(1:k));
-    
-    % Linspace from Tblur to Tsaturation
-    exposures_nominal(idx_start:idx_end) = linspace(results.Tblur(beta_idx,k), ...
-                                                    results.Tsaturation(beta_idx,k), ...
-                                                    n_samples(k))';
-    
-    % Actual exposure: min(nominal, fmc_compensated)
-    exposures(idx_start:idx_end) = min(exposures_nominal(idx_start:idx_end), ...
-                                       fmc_exposures(k));
+    exposures(idx_start:idx_end) = linspace(Tblur,fmc_exposures(k),n);
     
     % Repeat electron_rate for this latitude
-    electron_rate(idx_start:idx_end) = results.electron_rate(beta_idx,k);
+    electron_rate(idx_start:idx_end) = electron_rate_ref(k);
 end
 
-% Finally, run SNR analysis
-path = fullfile(matlab.project.currentProject().RootFolder,"src","media","single_image");
-im = image_processing("optics",results.optics.name,"sensor",results.sensor.name,"db_path",path);
+% Run SNR analysis
+if full_dataset
+    im = image_processing("optics",results.optics.name,"sensor",results.sensor.name);
+else
+    path = fullfile(root_path,"src","media","single_image");
+    im = image_processing("optics",results.optics.name,"sensor",results.sensor.name,"db_path",path);
+end
 im.load_images();
 im.runSNR('exposures', exposures, 'noise', true, 'electron_rate', electron_rate);
 
-%% Use results to plot SNR trend
+% Load SNR results
 data = im.SNRout.data;
 snr = [data(:).mean_SNR];
 
+%%%%%% RESULTS PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plot SNR vs Exposure Time for all latitudes
 n = length(lats);
-colors = lines(n);
+colors = cmap();
 
 figure('Name','SNR vs Exposure Time','Units','centimeters','Position',[0 0 18 12])
 hold on
 for k = 1:n
     idx_start = sum(n_samples(1:k)) - sum(n_samples(k)) + 1;
     idx_end = sum(n_samples(1:k));
-    plot(exposures_nominal(idx_start:idx_end)*1e3, snr(idx_start:idx_end), ...
+    if abs(Tsat(k)-exposures(idx_end))>0.01*Tsat(k)
+        x = [exposures(idx_start:idx_end); Tsat(k)]*1e3;
+        y = [snr(idx_start:idx_end) snr(idx_end)];
+        a = mean(snr(idx_start:idx_end)' ./ sqrt(exposures(idx_start:idx_end)));
+        x_extrap = linspace(exposures(idx_end), Tsat(k), 50);
+        y_extrap = a * sqrt(x_extrap);
+        plot(x_extrap*1e3, y_extrap, ...
+            'LineWidth', 2, ...
+            'LineStyle', '--', ...
+            'Color', colors(k,:), ...
+            'HandleVisibility', 'off')
+    else
+        x = exposures(idx_start:idx_end) * 1e3;
+        y = snr(idx_start:idx_end);
+    end
+    plot(x, y, ...
         'LineWidth', 2, ...
         'Color', colors(k,:), ...
         'DisplayName', sprintf('λ = %.2f°', lats(k)))
@@ -90,5 +105,10 @@ xlabel('Target Exposure Time [ms]', 'FontSize', 13, 'FontWeight', 'bold')
 ylabel('SNR', 'FontSize', 13, 'FontWeight', 'bold')
 title(sprintf('%s | SNR | β = %.2f°', results.optics.name, beta(beta_idx)), ...
     'FontSize', 15, 'FontWeight', 'bold')
-legend('Location', 'southeast', 'FontSize', 12, 'Orientation', 'horizontal', 'NumColumns', 3)
+legend('Location', 'southeast', 'FontSize', 12, 'Orientation', 'horizontal', 'NumColumns', 2)
 grid on
+
+%%%%%% EXPORT PLOT AS FIG %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+saveas(gcf, fullfile(root_path, "IM_results", 'SNR_vs_ExposureTime.fig'));
+
+end
