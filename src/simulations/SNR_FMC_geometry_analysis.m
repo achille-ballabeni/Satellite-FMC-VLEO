@@ -84,6 +84,14 @@ for k = 1:n
     if abs(Tsat(k)-exposures(idx_end))>0.01*Tsat(k)
         x = [exposures(idx_start:idx_end); Tsat(k)]*1e3;
         y = [snr(idx_start:idx_end) snr(idx_end)];
+        a = mean(snr(idx_start:idx_end)' ./ sqrt(exposures(idx_start:idx_end)));
+        x_extrap = linspace(exposures(idx_end), Tsat(k), 50);
+        y_extrap = a * sqrt(x_extrap);
+        plot(x_extrap*1e3, y_extrap, ...
+            'LineWidth', 2, ...
+            'LineStyle', '--', ...
+            'Color', colors(k,:), ...
+            'HandleVisibility', 'off')
     else
         x = exposures(idx_start:idx_end) * 1e3;
         y = snr(idx_start:idx_end);
