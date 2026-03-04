@@ -25,22 +25,24 @@ This repo is managed via a MATLAB project. To run any code without having path i
 ## Python setup
 Some analysis require the execution of Python scripts. To get started:
 
-1) Create a virtual environment with the required Python version
+1) Open a terminal in the folder where you downloaded the repository.
+
+2) Create a virtual environment with the required Python version:
 
 ```console
 python3.11 -m venv env
 ```
 
-2) Activate environment
+3) Activate the environment:
 
 ```console
-env/Scripts/activate (Windows)
+.\env\Scripts\activate (Windows)
 ```
 ```console
 . env/bin/activate (Linux/macOS)
 ```
 
-3) Install dependencies
+4) Install dependencies:
 
 ```console
 pip install -r requirements.txt
