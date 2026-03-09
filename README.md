@@ -1,6 +1,7 @@
-# VLEO Numerical Simulator
+# Numerical Simulation of Satellite Forward Motion Compensation
 
-This project folder contains all scripts and code-related documents that were used to develop the Master Thesis.
+This project folder contains all scripts and code-related documents that were used to develop the master thesis: "Numerical Simulation of Satellite Forward Motion Compensation".
+Further documentation will be added once the thesis is published.
 
 ## Requirements
 * MATLAB >= R2025a with:
