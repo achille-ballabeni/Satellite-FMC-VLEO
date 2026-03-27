@@ -15,8 +15,7 @@ mi = 398600.418e9;
 T = period(a,mi);
 w0 = deg2rad([0;360/T;0]);
 
-% Initial nadir-poining attitude: x-axis opposet to velocity and z-axis
-% nadir
+% Initial nadir-poining attitude: x-axis opposed to velocity and z-axis nadir
 % R3(raan)->R1(i)->R3(aop+ta)
 eci2orb = angle2quat(deg2rad(op(4)),deg2rad(op(3)),deg2rad(op(6)+op(5)),"ZXZ"); %TODO: this is wrong if the orbit is constrained to SSO
 % R3(270)->R2(0)->R1(90): Yaw->Pitch->Roll
