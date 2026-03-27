@@ -175,6 +175,8 @@ classdef piezo_compensation < handle
             % Plot detail of compensated motion | Real
             figure("Name","Compensated Motion | Real",'Units','centimeters','Position',[0 0 18 12])
             plot(t_shifted_r, obj.zeroed_motion_r,"LineWidth",2,"Color",colors(3,:));
+            hold on;
+            plot(t_shifted_r, obj.pixel_shift_r-obj.T_r*obj.dudt_r/2,"LineWidth",2,"Color",colors(1,:));
             grid on;
             xlabel('Time [ms]', 'FontSize', 13, 'FontWeight', 'bold');
             ylabel('Pixel Shift [px]', 'FontSize', 13, 'FontWeight', 'bold');
