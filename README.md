@@ -9,15 +9,15 @@ FMC system.
 A FMC system is required to extend the exposure time so that more light can
 reach the sensor, while preventing motion blur.
 
-<figure style="text-align: center;">
-  <img src="src/media/documentation/no_ois.png" alt="no ois image">
-  <figcaption>Figure 1: Image captured at different exposure times without FMC.</figcaption>
-</figure>
+<p align="center">
+  <img src="src/media/documentation/no_ois.png" alt="no ois image" width="600" />
+</p>
+<p align="center"><em>Figure 1: Image captured at different exposure times without FMC.</em></p>
 
-<figure style="text-align: center;">
-  <img src="src/media/documentation/ois.png" alt="no ois image">
-  <figcaption>Figure 2: Image captured at different exposure times with FMC.</figcaption>
-</figure>
+<p align="center">
+  <img src="src/media/documentation/ois.png" alt="no ois image" width="600" />
+</p>
+<p align="center"><em>Figure 2: Image captured at different exposure times with FMC.</em></p>
 
 ## Table of Contents
 
@@ -27,7 +27,7 @@ reach the sensor, while preventing motion blur.
 - [Quick Start Guide](#quick-start-guide)
 - [Project Structure](#project-structure)
 - [Contact](#contact)
-- [Additional Resources](#additional-resources)
+- [References](#references)
 - [License](#license)
 
 
@@ -45,20 +45,20 @@ The framework is based on three main conceptual blocks:
       used ([main.f](src\analysis\radiative_transfer\6SV1.1\main.f)), so
       the executable had to be recompiled. Py6S [2,3] is used as an interface
       to setup and run simulations.
-
-<figure style="text-align: center;">
-  <img src="src/media/documentation/exp_comparison.png" alt="shot-noise">
-  <figcaption>Figure 3: Increasing exposure time reduces noise.</figcaption>
-</figure>
-   
+     
    - **Motion blur** is simulated by estimating the pixel shift: how many
      pixels the ground moves over the exposure time. Its effects are
      modelled by using built-in convolution filters in MATLAB.
 
-<figure style="text-align: center;">
-  <img src="src/media/documentation/convolution.png" alt="motion-blur">
-  <figcaption>Figure 4: Reproducing motion blur.</figcaption>
-</figure>
+<p align="center">
+  <img src="src/media/documentation/exp_comparison.png" alt="shot-noise" width="600" />
+</p>
+<p align="center"><em>Figure 3: Increasing exposure time reduces noise.</em></p>
+
+<p align="center">
+  <img src="src/media/documentation/convolution.png" alt="motion-blur" width="600" />
+</p>
+<p align="center"><em>Figure 4: Reproducing motion blur.</em></p>
 
 2. **Line-of-Sight Model**: Implementation of a mathematical model used for
    Line-of-Sight estimation, defined as the _intersection of the boresight
@@ -73,20 +73,20 @@ The framework is based on three main conceptual blocks:
    simulations. For these, a simple nadir pointing of the satellite is
    assumed.
 
-<figure style="text-align: center;">
-  <img src="src/media/documentation/los-reverse.png" alt="LoS">
-  <figcaption>Figure 5: LoS model.</figcaption>
-</figure>
+<p align="center">
+  <img src="src/media/documentation/los-reverse.png" alt="LoS" width="600" />
+</p>
+<p align="center"><em>Figure 5: LoS model.</em></p>
 
 3. **Piezo Motion Model:** Simulation of the required piezo actuator
    sinusoidal motion. This allows to carry out analyses on required
    amplitude vs exposure time/orbital condition and if the actuator can
    fully compensate the motion for the entire exposure time.
 
-<figure style="text-align: center;">
-  <img src="src/media/documentation/piezo-compensation.png" alt="piezo">
-  <figcaption>Figure 6: FMC compensation motion.</figcaption>
-</figure>
+<p align="center">
+  <img src="src/media/documentation/piezo-compensation.png" alt="piezo" width="600" />
+</p>
+<p align="center"><em>Figure 6: FMC compensation motion.</em></p>
 
 ## System Requirements
 
@@ -376,10 +376,7 @@ Satellite-FMC-VLEO/
 
 **Thesis Title**: Numerical Simulation of Forward Motion Compensation
 
-
-## Additional Resources
-
-### References
+## References
 [1] Second Simulation of a Satellite Signal in the Solar Spectrum vector
 code, https://salsa.umd.edu/6spage.html
 
