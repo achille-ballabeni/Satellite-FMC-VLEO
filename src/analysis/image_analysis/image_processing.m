@@ -448,6 +448,7 @@ classdef image_processing < handle
                 options.blur (1,1) double = false
                 options.noise (1,1) double = false
                 options.electron_rate (1,:) double = false
+                options.blur_time (1,:) double = false
             end
 
             % Validate blur and noise
@@ -463,6 +464,14 @@ classdef image_processing < handle
             elseif n ~= length(options.electron_rate)
                 error("The electron rate vecor must be the same size of the exposure times.")
             end
+
+            % Fix blur time if constant value is required
+            if options.blur_time == false
+                options.blur_time = options.exposures;
+            elseif n ~= length(options.blur_time)
+                error("The blur time vecor must be the same size of the exposure times.")
+            end
+
 
             % Initialize output variables
             obj.SNRout = struct( ...
@@ -485,6 +494,7 @@ classdef image_processing < handle
 
             for i = 1:n
                 time = options.exposures(i);
+                blur_time = options.blur_time(i);
                 electron_rate = options.electron_rate(i);
 
                 % Compute pixel shift and blur time

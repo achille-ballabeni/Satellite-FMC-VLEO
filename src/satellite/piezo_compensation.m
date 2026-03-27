@@ -128,14 +128,17 @@ classdef piezo_compensation < handle
             t_shifted_r = (obj.t_r)*10^3;
             t_shifted_s = (obj.t_s)*10^3;
             t_shifted_of = (obj.t_s)*10^3;
+
+            % Colors
+            colors = cmap();
             
             % Plot compensated motion | Real
             figure("Name","Global Plot | Real",'Units','centimeters','Position',[0 0 18 12])
-            plot(t_shifted_r, obj.pixel_shift_r,"LineWidth",2);
+            plot(t_shifted_r, obj.pixel_shift_r,"LineWidth",2,"Color",colors(1,:));
             hold on;
             grid on;
-            plot(t_shifted_r, obj.piezo_motion_r,"LineWidth",2);
-            plot(t_shifted_r, obj.compensated_motion_r,"LineWidth",2);
+            plot(t_shifted_r, obj.piezo_motion_r,"LineWidth",2,"Color",colors(2,:));
+            plot(t_shifted_r, obj.compensated_motion_r,"LineWidth",2,"Color",colors(3,:));
             xlabel('Time [ms]', 'FontSize', 13, 'FontWeight', 'bold');
             ylabel('Pixel Shift [px]', 'FontSize', 13, 'FontWeight', 'bold');
             title('Compensated Motion','FontSize', 15, 'FontWeight', 'bold');
@@ -144,11 +147,11 @@ classdef piezo_compensation < handle
             % Plot compensated motion | Sensors
             if ~isnan(obj.dudt_s)
                 figure("Name","Global Plot | Mesaures",'Units','centimeters','Position',[0 0 18 12])
-                plot(t_shifted_s, obj.pixel_shift_s,"LineWidth",2);
+                plot(t_shifted_s, obj.pixel_shift_s,"LineWidth",2,"Color",colors(1,:));
                 hold on;
                 grid on;
-                plot(t_shifted_s, obj.piezo_motion_s,"LineWidth",2);
-                plot(t_shifted_s, obj.compensated_motion_s,"LineWidth",2);
+                plot(t_shifted_s, obj.piezo_motion_s,"LineWidth",2,"Color",colors(2,:));
+                plot(t_shifted_s, obj.compensated_motion_s,"LineWidth",2,"Color",colors(3,:));
                 xlabel('Time [ms]', 'FontSize', 13, 'FontWeight', 'bold');
                 ylabel('Pixel Shift [px]', 'FontSize', 13, 'FontWeight', 'bold');
                 title('Compensated Motion','FontSize', 15, 'FontWeight', 'bold');
@@ -158,11 +161,11 @@ classdef piezo_compensation < handle
             % Plot compensated motion | Optical Flow
             if ~isnan(obj.dudt_of)
                 figure("Name","Global Plot | Optical Flow",'Units','centimeters','Position',[0 0 18 12])
-                plot(t_shifted_of, obj.pixel_shift_of,"LineWidth",2);
+                plot(t_shifted_of, obj.pixel_shift_of,"LineWidth",2,"Color",colors(1,:));
                 hold on;
                 grid on;
-                plot(t_shifted_of, obj.piezo_motion_of,"LineWidth",2);
-                plot(t_shifted_of, obj.compensated_motion_of,"LineWidth",2);
+                plot(t_shifted_of, obj.piezo_motion_of,"LineWidth",2,"Color",colors(2,:));
+                plot(t_shifted_of, obj.compensated_motion_of,"LineWidth",2,"Color",colors(3,:));
                 xlabel('Time [ms]', 'FontSize', 13, 'FontWeight', 'bold');
                 ylabel('Pixel Shift [px]', 'FontSize', 13, 'FontWeight', 'bold');
                 title('Compensated Motion','FontSize', 15, 'FontWeight', 'bold');
@@ -171,20 +174,22 @@ classdef piezo_compensation < handle
 
             % Plot detail of compensated motion | Real
             figure("Name","Compensated Motion | Real",'Units','centimeters','Position',[0 0 18 12])
-            plot(t_shifted_r, obj.zeroed_motion_r,"LineWidth",2);
+            plot(t_shifted_r, obj.zeroed_motion_r,"LineWidth",2,"Color",colors(3,:));
+            hold on;
+            plot(t_shifted_r, obj.pixel_shift_r-obj.T_r*obj.dudt_r/2,"LineWidth",2,"Color",colors(1,:));
             grid on;
             xlabel('Time [ms]', 'FontSize', 13, 'FontWeight', 'bold');
-            ylabel('Pizel Shift [px]', 'FontSize', 13, 'FontWeight', 'bold');
+            ylabel('Pixel Shift [px]', 'FontSize', 13, 'FontWeight', 'bold');
             title('Compensated Motion','FontSize', 15, 'FontWeight', 'bold');
             ylim([-0.5,0.5])
 
             % Plot detail of compensated motion | Sensors
             if ~isnan(obj.dudt_s)
                 figure("Name","Compensated Motion | Sensors",'Units','centimeters','Position',[0 0 18 12])
-                plot(t_shifted_s, obj.zeroed_motion_s,"LineWidth",2);
+                plot(t_shifted_s, obj.zeroed_motion_s,"LineWidth",2,"Color",colors(3,:));
                 grid on;
                 xlabel('Time [ms]', 'FontSize', 13, 'FontWeight', 'bold');
-                ylabel('Pizel Shift [px]', 'FontSize', 13, 'FontWeight', 'bold');
+                ylabel('Pixel Shift [px]', 'FontSize', 13, 'FontWeight', 'bold');
                 title('Compensated Motion','FontSize', 15, 'FontWeight', 'bold');
                 ylim([-0.5,0.5])
             end
@@ -192,23 +197,23 @@ classdef piezo_compensation < handle
             % Plot detail of compensated motion | OF
             if ~isnan(obj.dudt_of)
                 figure("Name","Compensated Motion | Optical Flow",'Units','centimeters','Position',[0 0 18 12])
-                plot(t_shifted_of, obj.zeroed_motion_of,"LineWidth",2);
+                plot(t_shifted_of, obj.zeroed_motion_of,"LineWidth",2,"Color",colors(3,:));
                 grid on;
                 xlabel('Time [ms]', 'FontSize', 13, 'FontWeight', 'bold');
-                ylabel('Pizel Shift [px]', 'FontSize', 13, 'FontWeight', 'bold');
+                ylabel('Pixel Shift [px]', 'FontSize', 13, 'FontWeight', 'bold');
                 title('Compensated Motion','FontSize', 15, 'FontWeight', 'bold');
                 ylim([-0.5,0.5])
             end
 
             % Compare the sources
             figure("Name","Compensated Motion | Comparison",'Units','centimeters','Position',[0 0 18 12])
-            plot(t_shifted_r, obj.zeroed_motion_r,"LineWidth",2,"DisplayName",'Compensated Motion | Real');
+            plot(t_shifted_r, obj.zeroed_motion_r,"LineWidth",2,"DisplayName",'Compensated Motion | Real',"Color",colors(1,:));
             hold on;
             if ~isnan(obj.dudt_s)
-                plot(t_shifted_s, obj.zeroed_motion_s,"LineWidth",2,"DisplayName",'Compensated Motion | Sensors');
+                plot(t_shifted_s, obj.zeroed_motion_s,"LineWidth",2,"DisplayName",'Compensated Motion | Sensors',"Color",colors(2,:));
             end
             if ~isnan(obj.dudt_of)
-                plot(t_shifted_of, obj.zeroed_motion_of,"LineWidth",2,"DisplayName",'Compensated Motion | Optical Flow');
+                plot(t_shifted_of, obj.zeroed_motion_of,"LineWidth",2,"DisplayName",'Compensated Motion | Optical Flow',"Color",colors(3,:));
             end
             grid on;
             xlabel('Time [ms]', 'FontSize', 13, 'FontWeight', 'bold');
