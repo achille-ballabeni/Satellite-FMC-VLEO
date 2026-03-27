@@ -393,5 +393,5 @@ https://py6s.readthedocs.io/en/latest/index.html#py6s-a-python-interface-to-6s
 
 ## License
 
-This project is licensed under the MIT License - see LICENSE file for
+This project is licensed under the GNU General Public License v3 - see LICENSE file for
 details.
