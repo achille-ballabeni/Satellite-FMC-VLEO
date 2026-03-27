@@ -469,7 +469,7 @@ classdef image_processing < handle
             if options.blur_time == false
                 options.blur_time = options.exposures;
             elseif n ~= length(options.blur_time)
-                error("The electron rate vecor must be the same size of the exposure times.")
+                error("The blur time vecor must be the same size of the exposure times.")
             end
 
 
